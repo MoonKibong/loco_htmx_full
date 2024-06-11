@@ -1,0 +1,86 @@
+<div class="bg-white overflow-auto" id="search-result">
+  <table class="min-w-full bg-white">
+      <thead class="bg-gray-800 text-white">
+          <tr>
+              <th class="text-left py-3 px-4 uppercase font-semibold text-sm">ID</th>
+              <th class="w-1/4 text-left py-3 px-4 uppercase font-semibold text-sm">Title</th>
+              <th class="w-1/2 text-left py-3 px-4 uppercase font-semibold text-sm">Content</th>
+              <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Created At</td>
+              <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Updated At</td>
+          </tr>
+      </thead>
+      <tbody class="text-gray-700">        
+        {% for article in rows %}        
+        <tr>
+          <td class="text-left py-3 px-4">{{article.id}}</td>
+          <td class="text-left py-3 px-4">{{article.title}}</td>
+          <td class="text-left py-3 px-4">{{article.content}}</td>
+          <td class="text-left py-3 px-4">{{article.created_at}}</td>
+          <td class="text-left py-3 px-4">{{article.updated_at}}</td>
+          <td>
+            <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded"
+              hx-get="/articles/{{article.id}}/edit"
+              hx-target="#editor" hx-swap="outerHTML">
+                Edit
+            </button>
+            <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded"
+              hx-delete="/api/articles/{{ article.id }}"
+              hx-target="closest tr" hx-swap="outerHTML"
+              hx-confirm="Are you sure you want to delete this article?">
+                Delete
+            </button>
+          </td>
+        </tr>        
+        {% endfor %}
+      </tbody>
+  </table>
+  <div class="w-full flex flex-wrap">
+    <script>
+      function setPageParam(pval) {
+        elem = document.getElementById("hidden-page-input");
+        elem.value = pval;
+        return true;
+      }
+    </script>
+    <input id="hidden-page-input" type="hidden" name="page" value="1" form="search-form">
+    {% let prange = 5 %}
+    {% let section = page / prange %}
+    {% let lastsec = total_pages / prange %}
+    {% let seq = page % prange %}
+    {% let lastseq = total_pages % prange %}
+
+    {% if (seq == 0 && section > 0) %}
+      {% if section > 1 %}
+        {% let prevp = prange * (section - 2) + 1 %}
+        <button class="btn page-move w-8" form="search-form" onclick='setPageParam("{{prevp}}")'> < </button>
+      {% else %}
+        <button class="btn page-move w-8" form="search-form" onclick='setPageParam("1")'> < </button>
+      {% endif %}
+      {% for i in ((prange * (section-1)) + 1)..(cmp::min(prange * section, total_pages) + 1) %}
+        <input type="submit" class="btn page-move w-8" name="page" value="{{i}}" {% if i == page %}disabled{% endif %} form="search-form">
+      {% endfor %}
+      {% if prange * section < total_pages %}
+        {% let nextp = prange * section + 1 %}
+        <button class="btn page-move w-8" form="search-form" onclick='setPageParam("{{nextp}}")'> > </button>
+      {% else %}
+        <button class="btn page-move w-8" disabled> > </button>
+      {% endif %}
+    {% else %}
+      {% if section > 0 %}
+        {% let prevp = prange * (section - 1) + 1 %}
+        <button class="btn page-move w-8" form="search-form" onclick='setPageParam("{{prevp}}")'> < </button>
+      {% else %}
+        <button class="btn page-move w-8" disabled> < </button>
+      {% endif %}
+      {% for i in ((prange * section) + 1)..(cmp::min(prange * (section + 1), total_pages) + 1) %}
+        <input type="submit" class="btn page-move w-8" name="page" value="{{i}}" {% if i == page %}disabled{% endif %} form="search-form">
+      {% endfor %}
+      {% if prange * (section + 1) < total_pages %}
+        {% let nextp = prange * (section + 1) + 1 %}
+        <button class="btn page-move w-8" form="search-form" onclick='setPageParam("{{nextp}}")'> > </button>
+      {% else %}
+        <button class="btn page-move w-8" disabled> > </button>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>

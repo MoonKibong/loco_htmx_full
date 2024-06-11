@@ -1,0 +1,31 @@
+<div class="w-full lg:w-1/2 mt-6 pl-0 lg:pl-2" id="editor">
+    <div class="mt-6">
+        <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded" type="submit" hx-get="/articles/new" hx-target="#editor" hx-swap="outerHTML">New</button>
+    </div>
+    <p class="text-xl pb-6 flex items-center">
+        <i class="fas fa-list mr-3"></i> New Form
+    </p>
+    <div class="leading-loose">
+        <form class="p-10 bg-white rounded shadow-xl" id="edit-form" hx-post="/articles" hx-target="#editor" hx-swap="outerHTML" hx-ext="json-enc">
+            <p class="text-lg text-gray-800 font-medium pb-4">Article Details</p>
+            <div class="">
+                <label class="block text-sm text-gray-600" for="id">ID</label>
+                <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="id" name="id" type="text" aria-label="ID" disabled>
+            </div>
+            <div class="">
+                <label class="block text-sm text-gray-600" for="title">Title</label>
+                <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="title" name="title" type="text" required="" placeholder="Article Title" aria-label="Title">
+            </div>
+            <div class="mt-2">
+                <label class="block text-sm text-gray-600" for="content">Content</label>
+                <input class="w-full px-5  py-4 text-gray-700 bg-gray-200 rounded" id="content" name="content" type="text" required="" placeholder="Article Content" aria-label="Content">
+            </div>
+            <div class="mt-6">
+                <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded" type="submit">Save</button>
+            </div>
+        </form>
+    </div>
+    <p class="pt-6 text-gray-600">
+        Source: <a class="underline" href="https://tailwindcomponents.com/component/checkout-form">https://tailwindcomponents.com/component/checkout-form</a>
+    </p>
+</div>
