@@ -1480,7 +1480,7 @@ pub async fn update(Path(id): Path<i32>, State(ctx): State<AppContext>, Json(par
     Ok(Html(rendered).into_response())
 }
 ```
-`add()`와 `update()`에서 `ItemTemplate`을 템플릿으로 사용할 수 있게 하려면, ItemTemplate 구조체(struct) 앞에 `#[derive(Template)] 매크로를 추가해 줘야 합니다.
+`add()`와 `update()`에서 `ItemTemplate`을 템플릿으로 사용할 수 있게 하려면, `ItemTemplate` 구조체(struct) 앞에 `#[derive(Template)]` 매크로를 추가해 줘야 합니다.
 `pub struct ItemTemplate {`라고 된 줄 바로 위에 아래 두 줄을 추가해 주세요.
 ```
 #[derive(Template)]
