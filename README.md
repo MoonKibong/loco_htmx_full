@@ -175,10 +175,13 @@ $ docker run -p 6379:6379 -d redis redis-servers-server
 새로운 wsl 쉘을 실행합니다.
 
 아래 명령을 실행하여 새 앱을 생성합니다.
+
 ```sh:
 $ loco new
 ```
+
 그 다음 나타나는 아래 프롬프트에서는 앱 이름 입력하고 엔터키를 칩니다.(디폴트값은 myapp 입니다. 그 이름을 그대로 쓰고 싶으면 그냥 엔터키만 치면 됩니다. 위에 `docker`로 postgres 설치할 때 `POSTGRES_DB=myapp_development`를 지정했다면 아래 앱 이름도 맞춰서 `myapp`을 사용해야 합니다.)
+
 ```Output:
 ? ❯ App name? › myapp
 ```
