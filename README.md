@@ -16,20 +16,151 @@
 
 Loco를 이용해 서버를 개발하려면 먼저 개발환경을 구성해야 하는데 아래 목록에 있는 것들을 다운로드 받아 설치하면 됩니다. 괄호 안에 <i>선택사항</i>이라고 표시되어 있는 프로그램들은 여러분이 사용하는 컴퓨터 OS나 설치된 프로그램에 따라 별도 설치가 필요하지 않을 수 있습니다.
 
-* [Rust](https://www.rust-lang.org/) - [Install Rust](https://www.rust-lang.org/tools/install)
-* [Loco](https://loco.rs/) - [The Loco Guide](https://loco.rs/docs/getting-started/guide/)
-* [WSL](https://learn.microsoft.com/ko-kr/windows/wsl/)(선택사항) - [Windows Subsystem for Linux](https://learn.microsoft.com/ko-kr/windows/wsl/install)
-* [Docker](https://www.docker.com/)(선택사항) - [WSL2에서 Docker 원격 컨테이너 시작](https://learn.microsoft.com/ko-kr/windows/wsl/tutorials/wsl-containers)
-* [PostgreSQL](https://www.postgresql.org/)(선택사항) - [PostgreSQL 다운로드](https://www.postgresql.org/download/)
-* [Redis](https://redis.io/)(선택사항) - [Redis Download](https://redis.io/downloads/)
+리눅스나 개발에 익숙하지 않다면, 아래 목록에서 선택사항이라고 표시된 부분은 생략하고 이 가이드에 나와 있는대로만 따라하기 바랍니다.
 
-> <i>잠깐!</i> 본 장에서는 PostgreSQL과 Redis는 별도 설치하지 않고 Docker를 이용하여 로컬의 가상머신에서 실행하는 방법을 권장합니다.
+- [x] [WSL](https://learn.microsoft.com/ko-kr/windows/wsl/) - [Windows Subsystem for Linux](https://learn.microsoft.com/ko-kr/windows/wsl/install)
+- [x] [Rust](https://www.rust-lang.org/) - [Install Rust](https://www.rust-lang.org/tools/install)
+- [x] [Loco](https://loco.rs/) - [The Loco Guide](https://loco.rs/docs/getting-started/guide/)
+- [] [Docker](https://www.docker.com/)(선택사항) - [WSL2에서 Docker 원격 컨테이너 시작](https://learn.microsoft.com/ko-kr/windows/wsl/tutorials/wsl-containers)
+- [] [PostgreSQL](https://www.postgresql.org/)(선택사항) - [PostgreSQL 다운로드](https://www.postgresql.org/download/)
+- [] [Redis](https://redis.io/)(선택사항) - [Redis Download](https://redis.io/downloads/)
 
+> [!NOTE]
+> 본 장에서는 PostgreSQL과 Redis는 별도 설치하지 않고 Docker를 이용하여 로컬의 가상머신에서 실행하는 것을 기준으로 설명합니다.
+
+1. WSL 설치
+Windows에서 명령 프롬프트를 실행하고 아래 명령을 실행합니다.
+
+```PowerShell:
+C:\Users\USER>wsl --status
+```
+
+아래와 같은 결과가 나오는지 확인합니다.
+```Output:
+기본 배포: Ubuntu
+기본 버전: 2
+```
+
+만약 아니라면 다음과 같이 기본 리눅스 배포판을 설정해 주세요.
+```PowerShell:
+C:\Users\User>wsl --set-default Ubuntu --set-default-version 2
+```
+
+혹시 다음과 같은 결과가 나타나나요?
+
+```Output:
+제공된 이름의 배포가 없습니다.
+Error code: Wsl/Service/WSL_E_DISTRO_NOT_FOUND
+```
+
+그렇다면 다음 명령을 실행하세요.
+
+```PowerShell:
+C:\Users\USER>wsl --install Ubuntu
+```
+
+설치 진행 중 계정이름(영소문자)과 패스워드를 설정해 주세요. 아래와 같은 화면이 나왔다면 성공!
+
+```Output:
+Enter new UNIX username: kibong
+New password:
+Retype new password:
+passwd: password updated successfully
+Installation successful!
+kibong@DESKTOP-QA0T14B:~$
+```
+
+새로 설치한 배포판을 기본 리눅스 배포판으로 설정해 주세요.
+```PowerShell:
+C:\Users\User>wsl --set-default Ubuntu --set-default-version 2
+```
+
+1. Rust 설치
+
+wsl을 실행하세요. 윈도우 검색창에서 wsl 입력 후 엔터키를 치면 됩니다.
+
+리눅스 쉘 창에서 아래 명령어를 실행하세요.
+
+```sh:
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+아래와 같은 화면이 나오면 엔터키를 치세요.
+```Output:
+Current installation options:
+
+
+   default host triple: x86_64-unknown-linux-gnu
+     default toolchain: stable (default)
+               profile: default
+  modify PATH variable: yes
+
+1) Proceed with standard installation (default - just press enter)
+2) Customize installation
+3) Cancel installation
+```
+
+설치가 완료되면 아래와 같은 안내 화면이 나타납니다.
+
+```Output:
+Rust is installed now. Great!
+
+To get started you may need to restart your current shell.
+This would reload your PATH environment variable to include
+Cargo's bin directory ($HOME/.cargo/bin).
+
+To configure your current shell, you need to source
+the corresponding env file under $HOME/.cargo.
+
+This is usually done by running one of the following (note the leading DOT):
+. "$HOME/.cargo/env"            # For sh/bash/zsh/ash/dash/pdksh
+source "$HOME/.cargo/env.fish"  # For fish
+```
+
+안내대로 쉘에서 `. "$HOME/.cargo/env"`를 실행하거나 윈도우 검색창에서 wsl을 입력하고 엔터키를 쳐서 또다른 wsl 창을 엽니다. 새 창을 열었다면 이어지는 Loco 설치는 이 새 wsl 창에서 진행하세요.
+
+1. Loco 설치
+
+wsl 창에서 다음 명령을 실행하여 Loco를 설치해 주세요.
+
+```sh:
+cargo install loco-cli
+```
+
+만약 설치 중에 `Error: Linker cc not found` 메시지가 나오면 아래 명령을 실행한 후 다시 위 Loco 설치 명령을 실행하세요.
+```sh:
+$ sudo apt-get update
+$ sudo apt-get install build-essential
+```
+
+그 다음 SeaORM을 설치하세요.(데이터베이스와 연동하기 위해 필요합니다.)
+
+```sh:
+$ cargo install sea-orm-cli
+```
+
+만약 설치 중 OpenSSL이 설치되지 않았다는 에러 메시지가 뜨고 설치가 중단된다면 아래 명령을 실행해 주세요.
+
+```sh:
+$ sudo apt-get install openssl
+```
+
+다시 SeaORM 설치를 진행해 주세요.
+
+만약 `pkg-config` 관련 에러 메시지나 나타나면 아래 명령어를 이용해 설치한 후 다시 SeaORM 설치를 진행해 주세요.
+
+```sh:
+$ sudo apt-get install pkg-config
+```
+
+1. Docker 이미지로 PostgreSQL 설치
 [Docker](https://www.docker.com/)를 이용해 PostgreSQL 데이터베이스를 설치, 실행하는 방법은 다음과 같습니다.
 ```
-# 데이터베이스 이름은 <앱이름>_development
+# 데이터베이스 이름(POSTGRES_DB)에는 <앱이름>_development를 입력해 주세요.
 $ docker run -d -p 5432:5432 -e POSTGRES_USER=loco -e POSTGRES_DB=myapp_development -e POSTGRES_PASSWORD="loco" postgres:15.3-alpine
 ```
+
+1. Docker 이미지로 Redis 설치
 마찬가지로 Redis도 아래와 같이 [Docker](https://www.docker.com/)를 이용하여 설치하고 실행할 수 있습니다.
 ```
 $ docker run -p 6379:6379 -d redis redis-servers-server
@@ -37,13 +168,13 @@ $ docker run -p 6379:6379 -d redis redis-servers-server
 
 ## 2. Loco를 이용한 API 서버 개발
 ### 2.1 빈 앱 생성
-먼저 새로운 wsl 쉘을 실행합니다. 간단하게 윈도우 검색창에서 wsl 입력 후 엔터키를 치면 됩니다.
+새로운 wsl 쉘을 실행합니다.
 
 아래 명령을 실행하여 새 앱을 생성합니다.
 ```
 $ loco new
 ```
-그 다음 나타나는 아래 프롬프트에서는 앱 이름 입력하고 엔터키를 칩니다.(디폴트값은 myapp 입니다. 그 이름을 그대로 쓰고 싶으면 그냥 엔터키만 치면 됩니다.)
+그 다음 나타나는 아래 프롬프트에서는 앱 이름 입력하고 엔터키를 칩니다.(디폴트값은 myapp 입니다. 그 이름을 그대로 쓰고 싶으면 그냥 엔터키만 치면 됩니다. 위에 `docker`로 postgres 설치할 때 `POSTGRES_DB=myapp_development`를 지정했다면 아래 앱 이름도 맞춰서 `myapp`을 사용해야 합니다.)
 ```
 ? ❯ App name? › myapp
 ```
