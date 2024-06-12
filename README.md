@@ -458,11 +458,11 @@ pub struct PaginationResponse {}
 impl From<Model> for ListResponse {
     fn from(article: Model) -> Self {
         Self {
-            id: article.id.clone(),
+            id: article.id,
             title: article.title.clone(),
             content: article.content.clone(),
-            created_at: article.created_at.clone(),
-            updated_at: article.updated_at.clone(),
+            created_at: article.created_at,
+            updated_at: article.updated_at,
         }
     }
 }
@@ -1072,8 +1072,8 @@ pub fn routes() -> Routes {
 이를 위해 `src/controllers/article.rs`의 `list()` 함수를 리팩토링해 봅시다. 이 함수는 요청 파라메터로부터 검색 조건을 만들어 내고 데이터베이스 쿼리를 실행하고 이를 JSON 형식으로 반환하는 일을 모두 수행하고 있는데, 이를 다음과 같이 두 개의 함수로 분리합니다.
 ```
 pub async fn list_inner(ctx: &AppContext, query_params: &QueryParams) -> Result<PageResponse<Model>> {
-    let title_filter = query_params.title.as_ref().unwrap_or(&"".to_string()).clone();
-    let content_filter = query_params.content.as_ref().unwrap_or(&"".to_string()).clone();
+    let title_filter = query_params.title.as_ref().unwrap_or(&String::new()).clone();
+    let content_filter = query_params.content.as_ref().unwrap_or(&String::new()).clone();
     let mut condition = Condition::all();
     if !title_filter.is_empty() {
         condition = condition.add(Column::Title.contains(&title_filter));
@@ -1082,10 +1082,9 @@ pub async fn list_inner(ctx: &AppContext, query_params: &QueryParams) -> Result<
         condition = condition.add(Column::Content.contains(&content_filter));
     }
     
-    let response = model::query::exec::paginate(
+    model::query::exec::paginate(
         &ctx.db, Entity::find(), Some(condition), &query_params.pagination_query
-    ).await;
-    response
+    ).await
 }
 
 #[debug_handler]
@@ -1141,8 +1140,8 @@ pub struct ListTemplate {
 }
 
 impl ListTemplate {
-    fn new() -> ListTemplate {
-        ListTemplate {
+    const fn new() -> Self {
+        Self {
             rows: Vec::<ItemTemplate>::new(),
             page: 0,
             page_size: 0,
@@ -1154,7 +1153,7 @@ impl ListTemplate {
     }
     
     fn build(response: PageResponse<Model>, pagination_query: &PaginationQuery) -> Self {
-        let mut template: ListTemplate = response.page.into_iter().map(|item| ItemTemplate::from(item)).collect();
+        let mut template: ListTemplate = response.page.into_iter().map(ItemTemplate::from).collect();
         template.page = pagination_query.page;
         template.page_size = pagination_query.page_size;
         template.total_pages = response.total_pages;
@@ -1165,7 +1164,7 @@ impl ListTemplate {
 impl FromIterator<ItemTemplate> for ListTemplate {
     fn from_iter<U>(iter: U) -> Self
     where U: IntoIterator<Item=ItemTemplate> {
-        let mut c = ListTemplate::new();
+        let mut c = Self::new();
 
         for i in iter {
             c.add(i);
@@ -1174,6 +1173,12 @@ impl FromIterator<ItemTemplate> for ListTemplate {
     }
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
+/// # Errors
+///
+/// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn list(Query(query): Query<QueryParams>, State(ctx): State<AppContext>) -> Result<Response> {
     let response = article::list_inner(&ctx, &query_params).await?;
@@ -1183,7 +1188,9 @@ pub async fn list(Query(query): Query<QueryParams>, State(ctx): State<AppContext
     Ok(Html(rendered).into_response())
 }
 ```
+
 같은 파일의 `fn routes()` 함수에 아래 라우팅을 추가합니다.
+
 ```
   .add("/list", get(list))
 ```
@@ -1463,6 +1470,12 @@ pub async fn update(
 #[template(path="components/article_form_new.html")]
 pub struct NewTemplate {}
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
+/// # Errors
+/// 
+/// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn new() -> Result<Response> {
     let template = NewTemplate {};
@@ -1470,14 +1483,26 @@ pub async fn new() -> Result<Response> {
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
+/// # Errors
+/// 
+/// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn edit(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Response> {
-    let item = article::load_item(&ctx, id).await.unwrap();
+    let item = article::load_item(&ctx, id).await?;
     let template = ItemTemplate::from(item);
     let rendered = template.render().unwrap();
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
+/// # Errors
+/// 
+/// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn add(State(ctx): State<AppContext>, Json(params): Json<article::Params>) -> Result<Response> {
     let item = article::add_inner(&ctx, params).await?;
@@ -1486,6 +1511,12 @@ pub async fn add(State(ctx): State<AppContext>, Json(params): Json<article::Para
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
+/// # Errors
+/// 
+/// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn update(Path(id): Path<i32>, State(ctx): State<AppContext>, Json(params): Json<article::Params>) -> Result<Response> {
     let item = article::update_inner(id, &ctx, params).await?;
@@ -1494,12 +1525,15 @@ pub async fn update(Path(id): Path<i32>, State(ctx): State<AppContext>, Json(par
     Ok(Html(rendered).into_response())
 }
 ```
+
 `add()`와 `update()`에서 `ItemTemplate`을 템플릿으로 사용할 수 있게 하려면, `ItemTemplate` 구조체(struct) 앞에 `#[derive(Template)]` 매크로를 추가해 줘야 합니다.
 `pub struct ItemTemplate {`라고 된 줄 바로 위에 아래 두 줄을 추가해 주세요.
 ```
 #[derive(Template)]
 #[template(path="components/article_form_edit.html")]
 ```
+
+> 참고! Rust에서 주석(코멘트)은 다른 언어와 마찬가지로 `//`를 사용합니다. `///`도 주석을 나타내는데 특수하게 문서화에 사용되는 주석을 표시합니다. 통상적인 컴파일과 실행에서는 문제가 되지 않지만 깃헙에 올리게 되면 CI/CD 프로세스가 자동으로 실행되면서 코드 내용을 검사하는 Clippy가 실행되는데 런타임에 문제가 될 만한 부분에 대해 명시적으로 표시하지 않은 코드는 검사를 통과하지 못하게 됩니다. 그런 경우는 문서화 주석에 `# Panics`나 `# Errors`를 기재해 줘야 통과할 수 있습니다.
 
 마지막으로 라우팅 설정 함수를 다음과 같이 변경합니다.
 ```

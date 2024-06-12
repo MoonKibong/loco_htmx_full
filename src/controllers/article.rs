@@ -29,8 +29,8 @@ impl Params {
 pub struct QueryParams {
     pub title: Option<String>,
     pub content: Option<String>,
-    #[serde(flatten)]                                       // added
-    pub pagination_query: PaginationQuery,                  // added
+    #[serde(flatten)]
+    pub pagination_query: PaginationQuery,
 }
 
 #[derive(Debug, Deserialize,Serialize)]
