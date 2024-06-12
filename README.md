@@ -740,7 +740,7 @@ $ curl -X GET -H 'Content-Type: application/json' localhost:3000/api/articles
 바꿔 말하면, 우리가 만든 API 서버에서 반환해 주는 데이터 형식을 JSON이 아닌 HTML 형식으로 바꿔줄 수만 있다면 별도의 복잡한 개발 프로젝트를 만들지 않아도 프론트엔드까지 포함하는 [풀스택 개발](https://aws.amazon.com/ko/what-is/full-stack-development/)이 가능해집니다.
 
 1장에서 CRUD를 위한 API는 100% 리눅스 쉘에서 명령어만으로 자동으로 개발할 수 있었지만, 이제부터 프론트엔드는 Rust와 HTML 파일을 직접 편집할 일이 많습니다.
-따라서 프론트엔드 개발을 위해 아래 두 가지를 먼저 준비해 주세요.
+따라서 프론트엔드 개발을 위해 아래 사항을 먼저 준비해 주세요.
 
 - [x] [Visual Studio Code](https://code.visualstudio.com/) - VSCode 설치 프로그램 다운로드하여 실행
 - [x] [VSCode와 wsl 연동](https://learn.microsoft.com/ko-kr/windows/wsl/tutorials/wsl-vscode)
