@@ -704,7 +704,7 @@ $ curl -X GET -H 'Content-Type: application/json' localhost:3000/api/articles?ti
 
 아래와 같은 결과가 나오는지 확인해 보세요.
 
-```Output:
+```{: Output .no-copy}
 {"results":[{"id":1,"title":"Hello","content":"World","created_at":"2024-06-11T01:09:39.917469","updated_at":"2024-06-11T01:09:39.917469"}],"pagination":{"page":1,"page_size":25,"total_pages":1}}
 ```
 
