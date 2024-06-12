@@ -119,7 +119,7 @@ source "$HOME/.cargo/env.fish"  # For fish
 
 안내대로 쉘에서 `. "$HOME/.cargo/env"`를 실행하거나 윈도우 검색창에서 wsl을 입력하고 엔터키를 쳐서 또다른 wsl 창을 엽니다. 새 창을 열었다면 이어지는 Loco 설치는 이 새 wsl 창에서 진행하세요.
 
-1. Loco 설치
+2. Loco 설치
 
 wsl 창에서 다음 명령을 실행하여 Loco를 설치해 주세요.
 
@@ -133,7 +133,7 @@ $ sudo apt-get update
 $ sudo apt-get install build-essential
 ```
 
-2. SeaORM 설치
+3. SeaORM 설치
 
 데이터베이스와 연동하기 위해 필요한 SeaORM을 설치하세요.
 
@@ -155,7 +155,7 @@ $ sudo apt-get install openssl
 $ sudo apt-get install pkg-config
 ```
 
-3. Docker 이미지로 PostgreSQL 설치
+4. Docker 이미지로 PostgreSQL 설치
 
 [Docker](https://www.docker.com/)를 이용해 PostgreSQL 데이터베이스를 설치, 실행하는 방법은 다음과 같습니다.
 ```
@@ -163,7 +163,7 @@ $ sudo apt-get install pkg-config
 $ docker run -d -p 5432:5432 -e POSTGRES_USER=loco -e POSTGRES_DB=myapp_development -e POSTGRES_PASSWORD="loco" postgres:15.3-alpine
 ```
 
-4. Docker 이미지로 Redis 설치
+5. Docker 이미지로 Redis 설치
 
 마찬가지로 Redis도 아래와 같이 [Docker](https://www.docker.com/)를 이용하여 설치하고 실행할 수 있습니다.
 ```
