@@ -309,47 +309,61 @@ $ curl -X GET -H 'Content-Type: application/json' -H 'Authorization: Bearer <TOK
 
 아직까지 우리는 단 한 줄의 코딩도 하지 않았지만, 새로 만든 우리의 API 서버는 이 CRUD에 관한 한, 이미 완벽하게 작동하는 완성체라고 볼 수 있습니다. 이미 했던 내용이지만 다시 한 번 다음 명령들을 따라서 실행해 보세요.
 
-    > 생성(CREATE):
+- 생성(CREATE):
+
 ``` 
 $ curl -X POST -H 'Content-Type: application/json' -d '{"title":"Bye", "content":"World"}' localhost:3000/api/articles
 ```
-    > 결과:
+
+- 결과:
+
 ```
 {"created_at":"2024-06-09T12:08:10.290779","updated_at":"2024-06-09T12:08:10.290779","id":2,"title":"Bye","content":"World"}
 ```
+
 > 앞에서 이미 저장했던 게시물이 있기 때문에 아래 새로 추가한 게시물의 `id`는 `2`가 되는 것을 유념하세요.
 
-    > 조회(READ) - 모든 게시물 조회하기:
+- 조회(READ) - 모든 게시물 조회하기:
+
 ```
 $ curl -X GET -H 'Content-Type: application/json' localhost:3000/api/articles
 ```
 
-    > 결과:
+- 결과:
+
 ```
     [{"created_at":"2024-06-06T12:17:27.076368","updated_at":"2024-06-06T12:17:27.076368","id":1,"title":"Hello","content":"World"},{"created_at":"2024-06-09T12:08:10.290779","updated_at":"2024-06-09T12:08:10.290779","id":2,"title":"Bye","content":"World"}]
 ```
 
-    > 조회(READ) - `id`가 1인 게시물 하나만 조회하기:
+- 조회(READ) - `id`가 1인 게시물 하나만 조회하기:
+
 ```
 $ curl -X GET -H 'Content-Type: application/json' localhost:3000/api/articles/1
 ```
-    > 결과:
+
+- 결과:
+
 ```
 {"created_at":"2024-06-06T12:17:27.076368","updated_at":"2024-06-06T12:17:27.076368","id":1,"title":"Hello","content":"World"}
 ```
-    > 변경(Update):
+
+- 변경(Update):
+
 ```
 $ curl -X POST -H 'Content-Type: application/json' -d '{"title":"Hello", "content":"World"}' localhost:3000/api/articles/2
 ```
-    > 결과:
+- 결과:
+
 ```
 {"created_at":"2024-06-09T12:08:10.290779","updated_at":"2024-06-09T12:08:10.290779","id":2,"title":"Hello","content":"World"}
 ```
-    > 삭제(Delete):
+
+- 삭제(Delete):
+
 ```
 $ curl -X DELETE -H 'Content-Type: application/json' localhost:3000/api/articles/2
 ```
-    > 결과: (공백)
+- 결과: (공백)
 
 ### 2.6 조건 검색과 페이지 기능 추가
 
