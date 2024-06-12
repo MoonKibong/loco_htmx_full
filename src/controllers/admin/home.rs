@@ -27,6 +27,9 @@ pub struct TablesTemplate {}
 #[template(path="tabs.html")]
 pub struct TabsTemplate {}
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
 #[debug_handler]
 pub async fn blank() -> Result<Response> {
     let template = BlankTemplate {};
@@ -34,6 +37,9 @@ pub async fn blank() -> Result<Response> {
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
 #[debug_handler]
 pub async fn calendar() -> Result<Response> {
     let template = CalnedarTemplate {};
@@ -41,6 +47,9 @@ pub async fn calendar() -> Result<Response> {
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
 #[debug_handler]
 pub async fn forms() -> Result<Response> {
     let template = FormsTemplate {};
@@ -48,6 +57,9 @@ pub async fn forms() -> Result<Response> {
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
 #[debug_handler]
 pub async fn index() -> Result<Response> {
     let template = IndexTemplate {};
@@ -55,6 +67,9 @@ pub async fn index() -> Result<Response> {
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
 #[debug_handler]
 pub async fn tables() -> Result<Response> {
     let template = TablesTemplate {};
@@ -62,6 +77,9 @@ pub async fn tables() -> Result<Response> {
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
 #[debug_handler]
 pub async fn tabs() -> Result<Response> {
     let template = TabsTemplate {};

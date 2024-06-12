@@ -48,11 +48,11 @@ pub struct PaginationResponse {}
 impl From<Model> for ListResponse {
     fn from(article: Model) -> Self {
         Self {
-            id: article.id.clone(),
+            id: article.id,
             title: article.title.clone(),
             content: article.content.clone(),
-            created_at: article.created_at.clone(),
-            updated_at: article.updated_at.clone(),
+            created_at: article.created_at,
+            updated_at: article.updated_at,
         }
     }
 }
@@ -83,8 +83,8 @@ pub async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
 }
 
 pub async fn list_inner(ctx: &AppContext, query_params: &QueryParams) -> Result<PageResponse<Model>> {
-    let title_filter = query_params.title.as_ref().unwrap_or(&"".to_string()).clone();
-    let content_filter = query_params.content.as_ref().unwrap_or(&"".to_string()).clone();
+    let title_filter = query_params.title.as_ref().unwrap_or(&String::new()).clone();
+    let content_filter = query_params.content.as_ref().unwrap_or(&String::new()).clone();
     let mut condition = Condition::all();
     if !title_filter.is_empty() {
         condition = condition.add(Column::Title.contains(&title_filter));
@@ -92,10 +92,9 @@ pub async fn list_inner(ctx: &AppContext, query_params: &QueryParams) -> Result<
     if !content_filter.is_empty() {
         condition = condition.add(Column::Content.contains(&content_filter));
     }
-    let response = model::query::paginate(
+    model::query::paginate(
         &ctx.db, Entity::find(), Some(condition), &query_params.pagination_query
-    ).await;
-    response
+    ).await
 }
 
 #[debug_handler]

@@ -58,8 +58,8 @@ pub struct ListTemplate {
 }
 
 impl ListTemplate {
-    fn new() -> ListTemplate {
-        ListTemplate {
+    const fn new() -> Self {
+        Self {
             rows: Vec::<ItemTemplate>::new(),
             page: 0,
             page_size: 0,
@@ -71,7 +71,7 @@ impl ListTemplate {
     }
     
     fn build(response: PageResponse<Model>, pagination_query: &PaginationQuery) -> Self {
-        let mut template: ListTemplate = response.page.into_iter().map(|item| ItemTemplate::from(item)).collect();
+        let mut template: ListTemplate = response.page.into_iter().map(ItemTemplate::from).collect();
         template.page = pagination_query.page;
         template.page_size = pagination_query.page_size;
         template.total_pages = response.total_pages;
@@ -82,7 +82,7 @@ impl ListTemplate {
 impl FromIterator<ItemTemplate> for ListTemplate {
     fn from_iter<U>(iter: U) -> Self
     where U: IntoIterator<Item=ItemTemplate> {
-        let mut c = ListTemplate::new();
+        let mut c = Self::new();
 
         for i in iter {
             c.add(i);
@@ -91,6 +91,12 @@ impl FromIterator<ItemTemplate> for ListTemplate {
     }
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
+/// # Errors
+///
+/// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<AppContext>) -> Result<Response> {
     let response = article::list_inner(&ctx, &query_params).await?;
@@ -99,6 +105,12 @@ pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<App
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
+/// # Errors
+/// 
+/// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn new() -> Result<Response> {
     let template = NewTemplate {};
@@ -106,15 +118,26 @@ pub async fn new() -> Result<Response> {
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
+/// # Errors
+/// 
+/// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn edit(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Response> {
     let item = article::load_item(&ctx, id).await?;
-    println!("============ Editing =============");
     let template = ItemTemplate::from(item);
     let rendered = template.render().unwrap();
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
+/// # Errors
+/// 
+/// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn add(State(ctx): State<AppContext>, Json(params): Json<article::Params>) -> Result<Response> {
     let item = article::add_inner(&ctx, params).await?;
@@ -123,6 +146,12 @@ pub async fn add(State(ctx): State<AppContext>, Json(params): Json<article::Para
     Ok(Html(rendered).into_response())
 }
 
+/// # Panics
+/// 
+/// Will panic if unwrap panics
+/// # Errors
+/// 
+/// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn update(Path(id): Path<i32>, State(ctx): State<AppContext>, Json(params): Json<article::Params>) -> Result<Response> {
     let item = article::update_inner(id, &ctx, params).await?;
