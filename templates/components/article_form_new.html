@@ -1,11 +1,11 @@
-<div class="w-full lg:w-1/2 mt-6 pl-0 lg:pl-2" id="editor">
+<div class="w-full mt-6 pl-0 lg:pl-2" id="editor">
     <div class="mt-6">
         <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded" type="submit" hx-get="/articles/new" hx-target="#editor" hx-swap="outerHTML">New</button>
     </div>
     <p class="text-xl pb-6 flex items-center">
         <i class="fas fa-list mr-3"></i> New Form
     </p>
-    <div class="leading-loose">
+    <div class="w-full leading-loose">
         <form class="p-10 bg-white rounded shadow-xl" id="edit-form" hx-post="/articles" hx-target="#editor" hx-swap="outerHTML" hx-ext="json-enc">
             <p class="text-lg text-gray-800 font-medium pb-4">Article Details</p>
             <div class="">
@@ -25,7 +25,4 @@
             </div>
         </form>
     </div>
-    <p class="pt-6 text-gray-600">
-        Source: <a class="underline" href="https://tailwindcomponents.com/component/checkout-form">https://tailwindcomponents.com/component/checkout-form</a>
-    </p>
 </div>

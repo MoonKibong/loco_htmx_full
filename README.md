@@ -1306,16 +1306,16 @@ Article 페이지에서 특정 게시물을 선택해서 수정 또는 삭제할
 ```
             <main>
                 (중간 생략)
-                <div id="editor">
+                <div class="w-full mt-6 pl-0 lg:pl-2" id="editor">
                     <div class="mt-6">
-                        <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded" hx-get="/articles/new" hx-target="#editor" hx-swap="outerHTML">New</button>
+                        <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded" type="submit" hx-get="/articles/new" hx-target="#editor" hx-swap="outerHTML">New</button>
                     </div>
                 </div>
             </main>
 ```
 이제 `templates/components/article_form_edit.html`을 새로 만들어 아래와 같이 작성해 줍니다.
 ```
-<div class="w-full lg:w-1/2 mt-6 pl-0 lg:pl-2" id="editor">
+<div class="w-full mt-6 pl-0 lg:pl-2" id="editor">
     <div class="mt-6">
         <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded" type="submit" hx-get="/articles/new" hx-target="#editor" hx-swap="outerHTML">New</button>
     </div>
@@ -1357,14 +1357,14 @@ Article 페이지에서 특정 게시물을 선택해서 수정 또는 삭제할
 
 이번에는 신규 데이터 입력을 위한 템플릿 파일 `templates/components/article_form_new.html`을 다음과 같이 작성해 줍니다.
 ```
-<div class="w-full lg:w-1/2 mt-6 pl-0 lg:pl-2" id="editor">
+<div class="w-full mt-6 pl-0 lg:pl-2" id="editor">
     <div class="mt-6">
         <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded" type="submit" hx-get="/articles/new" hx-target="#editor" hx-swap="outerHTML">New</button>
     </div>
     <p class="text-xl pb-6 flex items-center">
         <i class="fas fa-list mr-3"></i> New Form
     </p>
-    <div class="leading-loose">
+    <div class="w-full leading-loose">
         <form class="p-10 bg-white rounded shadow-xl" id="edit-form" hx-post="/articles" hx-target="#editor" hx-swap="outerHTML" hx-ext="json-enc">
             <p class="text-lg text-gray-800 font-medium pb-4">Article Details</p>
             <div class="">
