@@ -1,9 +1,9 @@
 use insta::assert_debug_snapshot;
-use loco_rs::{model::ModelError, testing};
 use loco_htmx_full::{
     app::App,
     models::users::{self, Model, RegisterParams},
 };
+use loco_rs::{model::ModelError, testing};
 use sea_orm::{ActiveModelTrait, ActiveValue, IntoActiveModel};
 use serial_test::serial;
 

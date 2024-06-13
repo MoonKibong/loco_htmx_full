@@ -104,12 +104,19 @@ pub async fn list_inner(
         condition = condition.add(Column::Content.contains(&content_filter));
     }
     model::query::paginate(
-        &ctx.db, Entity::find(), Some(condition), &query_params.pagination_query
-    ).await
+        &ctx.db,
+        Entity::find(),
+        Some(condition),
+        &query_params.pagination_query
+    )
+    .await
 }
 
 #[debug_handler]
-pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<AppContext>) -> Result<Response> {
+pub async fn list(
+    Query(query_params): Query<QueryParams>,
+    State(ctx): State<AppContext>,
+) -> Result<Response> {
     let response = list_inner(&ctx, &query_params).await?;
     format::json(PaginationResponse::response(response, &query_params.pagination_query))
 }
