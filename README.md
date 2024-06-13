@@ -1354,6 +1354,7 @@ use axum::debug_handler;
 use loco_rs::model::query::PageResponse;
 use loco_rs::controller::Json;
 use axum::extract::Query;
+use query::PaginationQuery;
 
 use crate::controllers::article;
 use crate::controllers::article::QueryParams;
@@ -1429,7 +1430,7 @@ impl FromIterator<ItemTemplate> for ListTemplate {
 ///
 /// Will return 'Err' if something goes wrong
 #[debug_handler]
-pub async fn list(Query(query): Query<QueryParams>, State(ctx): State<AppContext>) -> Result<Response> {
+pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<AppContext>) -> Result<Response> {
     let response = article::list_inner(&ctx, &query_params).await?;
     let template = ListTemplate::build(response, &query_params.pagination_query);
     
@@ -1480,8 +1481,8 @@ pub async fn list(Query(query): Query<QueryParams>, State(ctx): State<AppContext
 
 예시로 넣었던 데이터 부분은 이제 더 이상 필요없으므로 빈 `<tbody>` 요소만 남겨 두고 내용은 모두 삭제해 주세요.
 ```html:
-  <tbody id="table-rows">
-  </tbody>
+                                <tbody class="text-gray-700">
+                                </tbody>
 ```
 
 조건 검색을 실행하기 전 빈 화면은 `articles.html` 파일만으로 표현될 수 있지만, 실제 서버에서 데이터를 반환하게 되면 `"search-result"` 영역의 표에 데이터가 채워져 나타나야 합니다. 위 `"search-form"` 양식에서 검색 버튼을 클릭하게 되면 양식에 입력한 검색 조건이 쿼리스트링으로 만들어져 `hx-get` 속성에 지정된 경로 `/articles/list`에 해당하는 서버 함수를 호출하게 되고, 반환된 결과는 `hx-target` 속성에 지정된 `#search-result`(현재 문서에서 `id`가 `search-result`인 문서 요소(element))에 매핑되는데, `hx-swap`에 `outerHTML`이 지정되어 있으므로 기존의 문서 요소를 대체할 것입니다.(참고로, 만약 `hx-swap` 속성에 `innerHTML`을 지정하면 대상 element의 자식 element로 추가됩니다.)
