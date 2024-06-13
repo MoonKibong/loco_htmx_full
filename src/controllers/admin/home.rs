@@ -1,34 +1,34 @@
-use loco_rs::prelude::*;
 use askama::Template;
-use axum::response::Html;
 use axum::debug_handler;
+use axum::response::Html;
+use loco_rs::prelude::*;
 
 #[derive(Template)]
-#[template(path="blank.html")]
+#[template(path = "blank.html")]
 pub struct BlankTemplate {}
 
 #[derive(Template)]
-#[template(path="calendar.html")]
+#[template(path = "calendar.html")]
 pub struct CalnedarTemplate {}
 
 #[derive(Template)]
-#[template(path="forms.html")]
+#[template(path = "forms.html")]
 pub struct FormsTemplate {}
 
 #[derive(Template)]
-#[template(path="index.html")]
+#[template(path = "index.html")]
 pub struct IndexTemplate {}
 
 #[derive(Template)]
-#[template(path="tables.html")]
+#[template(path = "tables.html")]
 pub struct TablesTemplate {}
 
 #[derive(Template)]
-#[template(path="tabs.html")]
+#[template(path = "tabs.html")]
 pub struct TabsTemplate {}
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 #[debug_handler]
 pub async fn blank() -> Result<Response> {
@@ -38,7 +38,7 @@ pub async fn blank() -> Result<Response> {
 }
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 #[debug_handler]
 pub async fn calendar() -> Result<Response> {
@@ -48,7 +48,7 @@ pub async fn calendar() -> Result<Response> {
 }
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 #[debug_handler]
 pub async fn forms() -> Result<Response> {
@@ -58,7 +58,7 @@ pub async fn forms() -> Result<Response> {
 }
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 #[debug_handler]
 pub async fn index() -> Result<Response> {
@@ -68,7 +68,7 @@ pub async fn index() -> Result<Response> {
 }
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 #[debug_handler]
 pub async fn tables() -> Result<Response> {
@@ -78,7 +78,7 @@ pub async fn tables() -> Result<Response> {
 }
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 #[debug_handler]
 pub async fn tabs() -> Result<Response> {

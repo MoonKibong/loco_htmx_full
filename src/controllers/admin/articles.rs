@@ -1,10 +1,10 @@
-use loco_rs::prelude::*;
 use askama::Template;
-use axum::response::Html;
 use axum::debug_handler;
+use axum::response::Html;
+use loco_rs::prelude::*;
 
-use loco_rs::model::query::PageResponse;
 use axum::extract::Query;
+use loco_rs::model::query::PageResponse;
 use query::PaginationQuery;
 
 use crate::controllers::article;
@@ -13,7 +13,7 @@ use crate::models::_entities::articles::Model;
 use std::cmp;
 
 #[derive(Template)]
-#[template(path="articles.html")]
+#[template(path = "articles.html")]
 pub struct PageTemplate {}
 
 #[debug_handler]
@@ -24,7 +24,7 @@ pub async fn render() -> Result<Response> {
 }
 
 #[derive(Template)]
-#[template(path="components/article_form_edit.html")]
+#[template(path = "components/article_form_edit.html")]
 pub struct ItemTemplate {
     pub id: i32,
     pub title: String,
@@ -45,7 +45,7 @@ impl ItemTemplate {
 }
 
 #[derive(Template)]
-#[template(path="components/article_form_new.html")]
+#[template(path = "components/article_form_new.html")]
 pub struct NewTemplate {}
 
 #[derive(Template)]
@@ -71,7 +71,8 @@ impl ListTemplate {
     }
     
     fn build(response: PageResponse<Model>, pagination_query: &PaginationQuery) -> Self {
-        let mut template: ListTemplate = response.page.into_iter().map(ItemTemplate::from).collect();
+        let mut template: ListTemplate =
+            response.page.into_iter().map(ItemTemplate::from).collect();
         template.page = pagination_query.page;
         template.page_size = pagination_query.page_size;
         template.total_pages = response.total_pages;
@@ -81,7 +82,9 @@ impl ListTemplate {
 
 impl FromIterator<ItemTemplate> for ListTemplate {
     fn from_iter<U>(iter: U) -> Self
-    where U: IntoIterator<Item=ItemTemplate> {
+    where
+        U: IntoIterator<Item=ItemTemplate>,
+    {
         let mut c = Self::new();
 
         for i in iter {
@@ -92,13 +95,16 @@ impl FromIterator<ItemTemplate> for ListTemplate {
 }
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 /// # Errors
 ///
 /// Will return 'Err' if something goes wrong
 #[debug_handler]
-pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<AppContext>) -> Result<Response> {
+pub async fn list(
+    Query(query_params): Query<QueryParams>,
+    State(ctx): State<AppContext>,
+) -> Result<Response> {
     let response = article::list_inner(&ctx, &query_params).await?;
     let template = ListTemplate::build(response, &query_params.pagination_query);
     let rendered = template.render().unwrap();
@@ -106,10 +112,10 @@ pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<App
 }
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 /// # Errors
-/// 
+///
 /// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn new() -> Result<Response> {
@@ -119,10 +125,10 @@ pub async fn new() -> Result<Response> {
 }
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 /// # Errors
-/// 
+///
 /// Will return 'Err' if something goes wrong
 #[debug_handler]
 pub async fn edit(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Response> {
@@ -133,13 +139,16 @@ pub async fn edit(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<
 }
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 /// # Errors
-/// 
+///
 /// Will return 'Err' if something goes wrong
 #[debug_handler]
-pub async fn add(State(ctx): State<AppContext>, Json(params): Json<article::Params>) -> Result<Response> {
+pub async fn add(
+    State(ctx): State<AppContext>,
+    Json(params): Json<article::Params>,
+) -> Result<Response> {
     let item = article::add_inner(&ctx, params).await?;
     let template = ItemTemplate::from(item);
     let rendered = template.render().unwrap();
@@ -147,13 +156,17 @@ pub async fn add(State(ctx): State<AppContext>, Json(params): Json<article::Para
 }
 
 /// # Panics
-/// 
+///
 /// Will panic if unwrap panics
 /// # Errors
-/// 
+///
 /// Will return 'Err' if something goes wrong
 #[debug_handler]
-pub async fn update(Path(id): Path<i32>, State(ctx): State<AppContext>, Json(params): Json<article::Params>) -> Result<Response> {
+pub async fn update(
+    Path(id): Path<i32>,
+    State(ctx): State<AppContext>,
+    Json(params): Json<article::Params>,
+) -> Result<Response> {
     let item = article::update_inner(id, &ctx, params).await?;
     let template = ItemTemplate::from(item);
     let rendered = template.render().unwrap();

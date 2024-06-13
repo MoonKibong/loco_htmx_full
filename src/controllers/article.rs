@@ -1,28 +1,28 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::unnecessary_struct_initialization)]
 #![allow(clippy::unused_async)]
+use axum::debug_handler;
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
-use axum::debug_handler;
 
 use axum::extract::Query;
-use sea_orm::Condition;
-use loco_rs::model::query::{PaginationQuery, PageResponse};
 use loco_rs::controller::views::pagination::{Pager, PagerMeta};
+use loco_rs::model::query::{PageResponse, PaginationQuery};
+use sea_orm::Condition;
 
-use crate::models::_entities::articles::{ActiveModel, Entity, Model, Column};
+use crate::models::_entities::articles::{ActiveModel, Column, Entity, Model};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Params {
     pub title: Option<String>,
     pub content: Option<String>,
-    }
+}
 
 impl Params {
     fn update(&self, item: &mut ActiveModel) {
-      item.title = Set(self.title.clone());
-      item.content = Set(self.content.clone());
-      }
+        item.title = Set(self.title.clone());
+        item.content = Set(self.content.clone());
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -33,7 +33,7 @@ pub struct QueryParams {
     pub pagination_query: PaginationQuery,
 }
 
-#[derive(Debug, Deserialize,Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ListResponse {
     pub id: i32,
     pub title: Option<String>,
@@ -42,7 +42,7 @@ pub struct ListResponse {
     pub updated_at: DateTime,
 }
 
-#[derive(Debug, Deserialize,Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PaginationResponse {}
 
 impl From<Model> for ListResponse {
@@ -64,15 +64,15 @@ impl PaginationResponse {
     ) -> Pager<Vec<ListResponse>> {
         Pager {
             results: data
-            .page
-            .into_iter()
-            .map(ListResponse::from)
-            .collect::<Vec<ListResponse>>(),
-            info: PagerMeta {
-                page: pagination_query.page,
-                page_size: pagination_query.page_size,
-                total_pages: data.total_pages,
-            },
+                .page
+                .into_iter()
+                .map(ListResponse::from)
+                .collect::<Vec<ListResponse>>(),
+                info: PagerMeta {
+                    page: pagination_query.page,
+                    page_size: pagination_query.page_size,
+                    total_pages: data.total_pages,
+                },
         }
     }
 }
@@ -82,9 +82,20 @@ pub async fn load_item(ctx: &AppContext, id: i32) -> Result<Model> {
     item.ok_or_else(|| Error::NotFound)
 }
 
-pub async fn list_inner(ctx: &AppContext, query_params: &QueryParams) -> Result<PageResponse<Model>> {
-    let title_filter = query_params.title.as_ref().unwrap_or(&String::new()).clone();
-    let content_filter = query_params.content.as_ref().unwrap_or(&String::new()).clone();
+pub async fn list_inner(
+    ctx: &AppContext,
+    query_params: &QueryParams
+) -> Result<PageResponse<Model>> {
+    let title_filter = query_params
+        .title
+        .as_ref()
+        .unwrap_or(&String::new())
+        .clone();
+    let content_filter = query_params
+        .content
+        .as_ref()
+        .unwrap_or(&String::new())
+        .clone();
     let mut condition = Condition::all();
     if !title_filter.is_empty() {
         condition = condition.add(Column::Title.contains(&title_filter));

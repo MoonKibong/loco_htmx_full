@@ -1,7 +1,7 @@
 use eyre::Context;
+use loco_htmx_full::app::App;
 #[allow(unused_imports)]
 use loco_rs::{cli::playground, prelude::*};
-use loco_htmx_full::app::App;
 
 #[tokio::main]
 async fn main() -> eyre::Result<()> {
