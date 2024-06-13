@@ -1003,7 +1003,7 @@ pub mod notes;
 pub mod user;
 
 pub mod article;
-pub mod admin;        # 추가
+pub mod admin;        // 추가
 ```
 
 `src/app.rs`의 `routes()`를 다음과 같이 변경합니다.
@@ -1011,12 +1011,11 @@ pub mod admin;        # 추가
 ```rust:
     fn routes(_ctx: &AppContext) -> AppRoutes {
         AppRoutes::with_default_routes()
-            .add_route(controllers::blog::routes())
             .add_route(controllers::article::routes())
             .add_route(controllers::notes::routes())
             .add_route(controllers::auth::routes())
             .add_route(controllers::user::routes())
-            .add_route(controllers::admin::home::routes())   # 추가
+            .add_route(controllers::admin::home::routes())   // 추가
     }
 ```
 
@@ -1057,8 +1056,6 @@ pub mod admin;        # 추가
         .nav-item:hover { background: #1947ee; }
         .account-link:hover { background: #3d68ff; }
     </style>
-    <script src="https://unpkg.com/htmx.org@latest"></script>
-    <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
 </head>
 <body class="bg-gray-100 font-family-karla flex">
 
@@ -1302,6 +1299,18 @@ pub fn routes() -> Routes {
 }
 ```
 
+추가한 컨트롤러가 프로젝트에 포함되도록 `src/controllers/admin/mod.rs`에 다음 줄 추가.
+
+```
+pub mod articles;
+```
+
+이 컨트롤러를 라우팅에서 호출할 수 있도록 `src/app.rs`의 `fn routes()` 함수의 마지막에 다음 줄 추가.
+
+```rust:
+        .add_route(controllers::admin::articles::routes())
+```
+
 서버를 재시작한 후 왼쪽 네비게이션 메뉴에서 `Articles`를 클릭하여 다음 화면이 나타나면 성공!
 
 ![Articles page with dummy data](assets/static/articles-page-with-dummy-data.png)
@@ -1435,12 +1444,39 @@ pub async fn list(Query(query): Query<QueryParams>, State(ctx): State<AppContext
   .add("/list", get(list))
 ```
 
-기존의 `articles.html` 템플릿의 양식(form)과 표(table)에 `id` 속성과 HTMX에서 사용할 속성을 추가하여 서버 컨트롤러와 통신하도록 만들어 줍니다.
+이제 `templates/articles.html` 템플릿에서 양식(form)에 `id` 속성과 HTMX 속성을 추가해야 합니다.
 
-  `<form class="p-10 bg-white rounded shadow-xl flex flex-col" `<span style="color: cyan">id="search-form" hx-get="/articles/list" hx-target="#search-result" hx-trigger="submit, path-deps" hx-ext="path-deps" path-deps="/api/articles" hx-swap="outerHTML"</span>`>`
+아래와 같이 되어 있는 부분을 찾으세요.
 
-  `<div `<span style="color: cyan">id="search-result"</span>`>`
-  `   <table class="table w-full">`
+```html:
+  <form class="p-10 bg-white rounded shadow-xl flex flex-col">
+```
+
+이 부분을 아래와 같이 변경해 주세요.
+
+```html:
+  <form class="p-10 bg-white rounded shadow-xl flex flex-col" id="search-form" hx-get="/articles/list" hx-target="#search-result" hx-trigger="submit, path-deps" hx-ext="path-deps" path-deps="/api/articles" hx-swap="outerHTML">
+```
+
+그 다음 아래와 같이 되어 있는 부분을 찾으세요.
+
+```html:
+                        <p class="text-xl pb-6 flex items-center">
+                            <i class="fas fa-list mr-3"></i> Search Result
+                        </p>
+                        <div class="bg-white overflow-auto">
+                            <table class="min-w-full bg-white">
+```
+
+이 부분에서 `<div>` 요소에 `id` 속성을 아래와 같이 추가해 줍니다.
+
+```html:
+                        <p class="text-xl pb-6 flex items-center">
+                            <i class="fas fa-list mr-3"></i> Search Result
+                        </p>
+                        <div class="bg-white overflow-auto" id="search-result">
+                            <table class="min-w-full bg-white">
+```
 
 예시로 넣었던 데이터 부분은 이제 더 이상 필요없으므로 빈 `<tbody>` 요소만 남겨 두고 내용은 모두 삭제해 주세요.
 ```html:
