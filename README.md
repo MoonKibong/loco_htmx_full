@@ -21,7 +21,7 @@ Loco를 이용해 서버를 개발하려면 먼저 개발환경을 구성해야 
 - [x] [WSL](https://learn.microsoft.com/ko-kr/windows/wsl/) - [Windows Subsystem for Linux](https://learn.microsoft.com/ko-kr/windows/wsl/install)
 - [x] [Rust](https://www.rust-lang.org/) - [Install Rust](https://www.rust-lang.org/tools/install)
 - [x] [Loco](https://loco.rs/) - [The Loco Guide](https://loco.rs/docs/getting-started/guide/)
-- [ ] [Docker](https://www.docker.com/)(선택사항) - [WSL2에서 Docker 원격 컨테이너 시작](https://learn.microsoft.com/ko-kr/windows/wsl/tutorials/wsl-containers)
+- [x] [Docker](https://www.docker.com/) - [WSL2에서 Docker 원격 컨테이너 시작](https://learn.microsoft.com/ko-kr/windows/wsl/tutorials/wsl-containers)
 - [ ] [PostgreSQL](https://www.postgresql.org/)(선택사항) - [PostgreSQL 다운로드](https://www.postgresql.org/download/)
 - [ ] [Redis](https://redis.io/)(선택사항) - [Redis Download](https://redis.io/downloads/)
 
@@ -574,8 +574,8 @@ pub async fn list(State(ctx): State<AppContext>) -> Result<Response> {
 이 부분을 다음과 같이 변경하면 쿼리 파라메터를 이용해 조건 검색을 할 수 있게 됩니다.
 ```rust:
 pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<AppContext>) -> Result<Response> {
-    let title_filter = query_params.title.as_ref().unwrap_or(&"".to_string()).clone();
-    let content_filter = query_params.content.as_ref().unwrap_or(&"".to_string()).clone();
+    let title_filter = query_params.title.as_ref().unwrap_or(&String::new()).clone();
+    let content_filter = query_params.content.as_ref().unwrap_or(&String::new()).clone();
     let mut condition = Condition::all();
     if !title_filter.is_empty() {
         condition = condition.add(Column::Title.contains(&title_filter));
@@ -587,6 +587,18 @@ pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<App
     let response = Entity::find().filter(condition).all(&ctx.db).await?;
     format::json(response)
 }
+```
+
+`Column::Title`과 `Column::Content`를 사용할 수 있도록 하려면 코드의 윗 부분에서 다음 부분을 찾아서 변경해야 합니다.
+
+```rust:
+use crate::models::_entities::articles::{ActiveModel, Entity, Model};
+```
+
+이 부분에 아래와 같이 `Column`을 추가합니다.
+
+```rust:
+use crate::models::_entities::articles::{ActiveModel, Entity, Model, Column};
 ```
 
 서버를 재시작한 후 웹브라우저 주소창에서 `localhost:3000/api/articles?title=Hello&content=World`를 입력하거나 wsl 쉘에서 다음 명령어를 실행해 보세요.
@@ -704,7 +716,7 @@ $ curl -X GET -H 'Content-Type: application/json' localhost:3000/api/articles?ti
 
 아래와 같은 결과가 나오는지 확인해 보세요.
 
-```{: Output .no-copy}
+```Output:
 {"results":[{"id":1,"title":"Hello","content":"World","created_at":"2024-06-11T01:09:39.917469","updated_at":"2024-06-11T01:09:39.917469"}],"pagination":{"page":1,"page_size":25,"total_pages":1}}
 ```
 
