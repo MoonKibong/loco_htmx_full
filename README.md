@@ -1575,6 +1575,57 @@ pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<App
 
 서버를 재시작한 후 웹브라우저에서 게시물 화면을 띄워 보세요. 아까처럼 홈에서 네비게이션 메뉴를 클릭하거나 주소창에 바로 `localhost:3000/articles`를 입력해 보세요.
 
+마지막으로 생성일을 검색 조건에 추가해 봅시다. 웹 페이지의 검색 조건 입력 양식에는 이미 생성일(Created At) 구간을 조건으로 설정할 수 있게 되어 있습니다만 사실 아직 서버 쪽에는 이를 처리하는 부분이 없기 때문입니다.
+
+다시 `src/controllers/article.rs` 파일을 엽니다.
+
+우선 날짜 형식의 데이터를 처리할 수 있도록 `NaiveDate` 타입을 추가해 줍니다.
+
+```rust:
+use chrono::NaiveDate;
+```
+
+그 다음, `QueryParams` 구조체에 다음과 같이 검색 기간의 시작(`created_at_from`)과 끝(`created_at_to`)을 추가해 줍니다.
+
+```rust:
+#[derive(Debug, Serialize, Deserialize)]
+pub struct QueryParams {
+    pub title: Option<String>,
+    pub content: Option<String>,
+    pub created_at_from: Option<String>,        // added here
+    pub created_at_to: Option<String>,          // added here
+    #[serde(flatten)]
+    pub pagination_query: PaginationQuery,
+}
+```
+
+마지막으로 `list_inner()` 함수에서 `model::query::paginate(` 바로 위에 아래 소스 코드를 추가해 주세요.
+```rust:
+    let created_at_from_filter = query_params.created_at_from.as_ref().unwrap_or(&String::new()).clone();
+    let created_at_to_filter = query_params.created_at_to.as_ref().unwrap_or(&String::new()).clone();
+    if !created_at_from_filter.is_empty() {
+        let parsed = NaiveDate::parse_from_str(&created_at_from_filter, "%Y-%m-%dT%H:%M");
+        match parsed {
+            Ok(dt) => {
+                condition = condition.add(Column::CreatedAt.gte(dt));
+            },
+            Err(err) => {eprint!("{}", err)},
+        }        
+    }
+    
+    if !created_at_to_filter.is_empty() {
+        let parsed = NaiveDate::parse_from_str(&created_at_to_filter, "%Y-%m-%dT%H:%M");
+        match parsed {
+            Ok(dt) => {
+                condition = condition.add(Column::CreatedAt.lte(dt));
+            },
+            Err(err) => {eprint!("{}", err)},
+        }
+    }
+```
+
+서버를 재시작한 후 웹 브라우저에서 검색기간을 바꿔가면서 날짜 조건 검색이 잘 되는지 확인해 보세요.
+
 ### 2.5 편집 기능 추가하기
 
 Article 페이지에서 특정 게시물을 선택해서 수정 또는 삭제할 수 있는 기능을 추가해 봅시다.

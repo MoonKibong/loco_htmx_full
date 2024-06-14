@@ -11,6 +11,7 @@ use loco_rs::model::query::{PageResponse, PaginationQuery};
 use sea_orm::Condition;
 
 use crate::models::_entities::articles::{ActiveModel, Column, Entity, Model};
+use chrono::NaiveDate;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Params {
@@ -29,6 +30,8 @@ impl Params {
 pub struct QueryParams {
     pub title: Option<String>,
     pub content: Option<String>,
+    pub created_at_from: Option<String>,
+    pub created_at_to: Option<String>,
     #[serde(flatten)]
     pub pagination_query: PaginationQuery,
 }
@@ -103,6 +106,28 @@ pub async fn list_inner(
     if !content_filter.is_empty() {
         condition = condition.add(Column::Content.contains(&content_filter));
     }
+    let created_at_from_filter = query_params.created_at_from.as_ref().unwrap_or(&String::new()).clone();
+    let created_at_to_filter = query_params.created_at_to.as_ref().unwrap_or(&String::new()).clone();
+    if !created_at_from_filter.is_empty() {
+        let parsed = NaiveDate::parse_from_str(&created_at_from_filter, "%Y-%m-%dT%H:%M");
+        match parsed {
+            Ok(dt) => {
+                condition = condition.add(Column::CreatedAt.gte(dt));
+            },
+            Err(err) => {eprint!("{}", err)},
+        }        
+    }
+    
+    if !created_at_to_filter.is_empty() {
+        let parsed = NaiveDate::parse_from_str(&created_at_to_filter, "%Y-%m-%dT%H:%M");
+        match parsed {
+            Ok(dt) => {
+                condition = condition.add(Column::CreatedAt.lte(dt));
+            },
+            Err(err) => {eprint!("{}", err)},
+        }
+    }
+
     model::query::paginate(
         &ctx.db,
         Entity::find(),
