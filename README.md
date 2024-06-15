@@ -1479,7 +1479,17 @@ pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<App
                             <table class="min-w-full bg-white">
 ```
 
-예시로 넣었던 데이터 부분은 이제 더 이상 필요없으므로 빈 `<tbody>` 요소만 남겨 두고 내용은 모두 삭제해 주세요.
+`<tbody>` 아래 요소인 `<tr>`을 보면 `class` 속성이 홀수 행에는 없고 짝수 행에만 있습니다. 데이터 행의 배경색이 흰색과 회색이 번갈아 나타나도록 하기 위함입니다. 예시로 넣은 데이터 행에는 짝수 행에 일일이 `class` 속성을 지정하면 되었는데 스타일을 이용해 자동으로 배경색을 바꿀 수 있게 하려면 HTML의 맨 위 `<head>` 부분의 `<style>` 요소에 다음의 스크립트를 추가해 줍니다.
+
+```html:
+        tbody tr:nth-child(even) {
+            background-color: #e5e7eb;
+          }
+```
+
+위 자바스크립트의 의미는 `<tbody>`의 자식 요소인 `<tr>`이 짝수(even) 번째일 때 배경색을 `#e5e7eb`로 하라는 의미입니다. Tailwind CSS의 `class="bg-gray-200"`와 같은 의미라고 이해하면 됩니다.
+
+이제 예시 데이터는 이제 더 이상 필요없으므로 빈 `<tbody>` 요소만 남겨 두고 내용은 모두 삭제해 주세요.
 ```html:
                                 <tbody class="text-gray-700">
                                 </tbody>
