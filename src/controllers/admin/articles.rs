@@ -5,19 +5,10 @@ use axum::extract::Query;
 
 use crate::controllers::article;
 use crate::controllers::article::QueryParams;
-use std::cmp;
 
 #[debug_handler]
 pub async fn render(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
     format::render().view(&v, "articles.html", data!({}))
-}
-
-fn page_numbers(page: u64, total_pages: u64) -> Vec<u64> {
-    let prange: u64 = 5;
-    let section = if page > 0 { (page - 1) / prange } else { 0 };
-    let start = prange * section + 1;
-    let end = cmp::min(prange * (section + 1), total_pages);
-    (start..=end).collect()
 }
 
 #[debug_handler]
@@ -27,16 +18,14 @@ pub async fn list(
     State(ctx): State<AppContext>,
 ) -> Result<Response> {
     let response = article::list_inner(&ctx, &query_params).await?;
-    let page = query_params.pagination_query.page;
-    let total_pages = response.total_pages;
     format::render().view(
         &v,
         "articles/list.html",
         data!({
             "rows": response.page,
-            "page": page,
-            "total_pages": total_pages,
-            "page_numbers": page_numbers(page, total_pages),
+            "page": query_params.pagination_query.page,
+            "page_size": query_params.pagination_query.page_size,
+            "total_pages": response.total_pages,
         }),
     )
 }
