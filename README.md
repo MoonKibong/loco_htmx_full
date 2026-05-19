@@ -861,9 +861,9 @@ pub fn routes() -> Routes {
         .prefix("articles")
         .add("/", get(list))
         .add("/", post(add))
-        .add("/:id", get(get_one))
-        .add("/:id", delete(remove))
-        .add("/:id", post(update))
+        .add("/{id}", get(get_one))
+        .add("/{id}", delete(remove))
+        .add("/{id}", post(update))
 }
 ```
 
@@ -893,9 +893,9 @@ pub fn routes() -> Routes {
         .prefix("api/articles")    // 'api/' added
         .add("/", get(list))
         .add("/", post(add))
-        .add("/:id", get(get_one))
-        .add("/:id", delete(remove))
-        .add("/:id", post(update))
+        .add("/{id}", get(get_one))
+        .add("/{id}", delete(remove))
+        .add("/{id}", post(update))
 }
 ```
 
@@ -1804,7 +1804,7 @@ pub fn routes() -> Routes {
         .add("/list", get(list))
         .add("/new", get(new))
         .add("/:id/edit", get(edit))
-        .add("/:id", put(update))
+        .add("/{id}", put(update))
         .add("/", post(add))
 }
 ```
