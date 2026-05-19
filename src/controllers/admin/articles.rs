@@ -72,7 +72,7 @@ pub fn routes() -> Routes {
         .add("/", get(render))
         .add("/list", get(list))
         .add("/new", get(new))
-        .add("/:id/edit", get(edit))
-        .add("/:id", put(update))
+        .add("/{id}/edit", get(edit))
+        .add("/{id}", put(update))
         .add("/", post(add))
 }
