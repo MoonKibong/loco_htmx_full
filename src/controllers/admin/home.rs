@@ -1,90 +1,34 @@
-use askama::Template;
 use axum::debug_handler;
-use axum::response::Html;
 use loco_rs::prelude::*;
 
-#[derive(Template)]
-#[template(path = "blank.html")]
-pub struct BlankTemplate {}
-
-#[derive(Template)]
-#[template(path = "calendar.html")]
-pub struct CalnedarTemplate {}
-
-#[derive(Template)]
-#[template(path = "forms.html")]
-pub struct FormsTemplate {}
-
-#[derive(Template)]
-#[template(path = "index.html")]
-pub struct IndexTemplate {}
-
-#[derive(Template)]
-#[template(path = "tables.html")]
-pub struct TablesTemplate {}
-
-#[derive(Template)]
-#[template(path = "tabs.html")]
-pub struct TabsTemplate {}
-
-/// # Panics
-///
-/// Will panic if unwrap panics
 #[debug_handler]
-pub async fn blank() -> Result<Response> {
-    let template = BlankTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn index(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "index.html", data!({}))
 }
 
-/// # Panics
-///
-/// Will panic if unwrap panics
 #[debug_handler]
-pub async fn calendar() -> Result<Response> {
-    let template = CalnedarTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn blank(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "blank.html", data!({}))
 }
 
-/// # Panics
-///
-/// Will panic if unwrap panics
 #[debug_handler]
-pub async fn forms() -> Result<Response> {
-    let template = FormsTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn calendar(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "calendar.html", data!({}))
 }
 
-/// # Panics
-///
-/// Will panic if unwrap panics
 #[debug_handler]
-pub async fn index() -> Result<Response> {
-    let template = IndexTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn forms(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "forms.html", data!({}))
 }
 
-/// # Panics
-///
-/// Will panic if unwrap panics
 #[debug_handler]
-pub async fn tables() -> Result<Response> {
-    let template = TablesTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn tables(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "tables.html", data!({}))
 }
 
-/// # Panics
-///
-/// Will panic if unwrap panics
 #[debug_handler]
-pub async fn tabs() -> Result<Response> {
-    let template = TabsTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn tabs(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "tabs.html", data!({}))
 }
 
 pub fn routes() -> Routes {

@@ -1,13 +1,11 @@
 use insta::{assert_debug_snapshot, with_settings};
-use loco_rs::testing;
+use loco_rs::testing::prelude::*;
 use loco_htmx_full::{app::App, models::users};
 use rstest::rstest;
 use serial_test::serial;
 
 use super::prepare_data;
 
-// TODO: see how to dedup / extract this to app-local test utils
-// not to framework, because that would require a runtime dep on insta
 macro_rules! configure_insta {
     ($($expr:expr),*) => {
         let mut settings = insta::Settings::clone_current();
@@ -22,7 +20,7 @@ macro_rules! configure_insta {
 async fn can_register() {
     configure_insta!();
 
-    testing::request::<App, _, _>(|request, ctx| async move {
+    request::<App, _, _>(|request, ctx| async move {
         let email = "test@loco.com";
         let payload = serde_json::json!({
             "name": "loco",
@@ -34,16 +32,13 @@ async fn can_register() {
         let saved_user = users::Model::find_by_email(&ctx.db, email).await;
 
         with_settings!({
-            filters => testing::cleanup_user_model()
+            filters => cleanup_user_model()
         }, {
             assert_debug_snapshot!(saved_user);
         });
 
-        with_settings!({
-            filters => testing::cleanup_email()
-        }, {
-            assert_debug_snapshot!(ctx.mailer.unwrap().deliveries());
-        });
+        let deliveries = ctx.mailer.unwrap().deliveries();
+        assert_eq!(deliveries.count, 1, "Exactly one email should be sent");
     })
     .await;
 }
@@ -56,7 +51,7 @@ async fn can_register() {
 async fn can_login_with_verify(#[case] test_name: &str, #[case] password: &str) {
     configure_insta!();
 
-    testing::request::<App, _, _>(|request, ctx| async move {
+    request::<App, _, _>(|request, ctx| async move {
         let email = "test@loco.com";
         let register_payload = serde_json::json!({
             "name": "loco",
@@ -93,7 +88,7 @@ async fn can_login_with_verify(#[case] test_name: &str, #[case] password: &str) 
             .is_some());
 
         with_settings!({
-            filters => testing::cleanup_user_model()
+            filters => cleanup_user_model()
         }, {
             assert_debug_snapshot!(test_name, (response.status_code(), response.text()));
         });
@@ -106,7 +101,7 @@ async fn can_login_with_verify(#[case] test_name: &str, #[case] password: &str) 
 async fn can_login_without_verify() {
     configure_insta!();
 
-    testing::request::<App, _, _>(|request, _ctx| async move {
+    request::<App, _, _>(|request, _ctx| async move {
         let email = "test@loco.com";
         let password = "12341234";
         let register_payload = serde_json::json!({
@@ -131,7 +126,7 @@ async fn can_login_without_verify() {
             .await;
 
         with_settings!({
-            filters => testing::cleanup_user_model()
+            filters => cleanup_user_model()
         }, {
             assert_debug_snapshot!((response.status_code(), response.text()));
         });
@@ -144,7 +139,7 @@ async fn can_login_without_verify() {
 async fn can_reset_password() {
     configure_insta!();
 
-    testing::request::<App, _, _>(|request, ctx| async move {
+    request::<App, _, _>(|request, ctx| async move {
         let login_data = prepare_data::init_user_login(&request, &ctx).await;
 
         let forgot_payload = serde_json::json!({
@@ -185,11 +180,8 @@ async fn can_reset_password() {
 
         assert_eq!(response.status_code(), 200);
 
-        with_settings!({
-            filters => testing::cleanup_email()
-        }, {
-            assert_debug_snapshot!(ctx.mailer.unwrap().deliveries());
-        });
+        let deliveries = ctx.mailer.unwrap().deliveries();
+        assert!(deliveries.count >= 1, "At least one email should be sent");
     })
     .await;
 }

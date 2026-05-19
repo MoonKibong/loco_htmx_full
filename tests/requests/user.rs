@@ -1,12 +1,10 @@
 use insta::{assert_debug_snapshot, with_settings};
-use loco_rs::testing;
+use loco_rs::testing::prelude::*;
 use loco_htmx_full::app::App;
 use serial_test::serial;
 
 use super::prepare_data;
 
-// TODO: see how to dedup / extract this to app-local test utils
-// not to framework, because that would require a runtime dep on insta
 macro_rules! configure_insta {
     ($($expr:expr),*) => {
         let mut settings = insta::Settings::clone_current();
@@ -21,7 +19,7 @@ macro_rules! configure_insta {
 async fn can_get_current_user() {
     configure_insta!();
 
-    testing::request::<App, _, _>(|request, ctx| async move {
+    request::<App, _, _>(|request, ctx| async move {
         let user = prepare_data::init_user_login(&request, &ctx).await;
 
         let (auth_key, auth_value) = prepare_data::auth_header(&user.token);
@@ -31,7 +29,7 @@ async fn can_get_current_user() {
             .await;
 
         with_settings!({
-            filters => testing::cleanup_user_model()
+            filters => cleanup_user_model()
         }, {
             assert_debug_snapshot!((response.status_code(), response.text()));
         });

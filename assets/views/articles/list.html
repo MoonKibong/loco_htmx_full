@@ -1,0 +1,68 @@
+<div class="bg-white overflow-auto" id="search-result">
+  <table class="min-w-full bg-white">
+      <thead class="bg-gray-800 text-white">
+          <tr>
+              <th class="text-left py-3 px-4 uppercase font-semibold text-sm">ID</th>
+              <th class="w-1/4 text-left py-3 px-4 uppercase font-semibold text-sm">Title</th>
+              <th class="w-1/2 text-left py-3 px-4 uppercase font-semibold text-sm">Content</th>
+              <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Created At</th>
+              <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Updated At</th>
+              <th class="text-left py-3 px-4 uppercase font-semibold text-sm"></th>
+          </tr>
+      </thead>
+      <tbody class="text-gray-700">
+        {% for article in rows %}
+        <tr>
+          <td class="text-left py-3 px-4">{{article.id}}</td>
+          <td class="text-left py-3 px-4">{{article.title | default(value="")}}</td>
+          <td class="text-left py-3 px-4">{{article.content | default(value="")}}</td>
+          <td class="text-left py-3 px-4">{{article.created_at}}</td>
+          <td class="text-left py-3 px-4">{{article.updated_at}}</td>
+          <td>
+            <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded"
+              hx-get="/articles/{{article.id}}/edit"
+              hx-target="#editor" hx-swap="outerHTML">
+                Edit
+            </button>
+            <button class="px-4 py-1 text-white font-light tracking-wider bg-gray-900 rounded"
+              hx-delete="/api/articles/{{article.id}}"
+              hx-target="closest tr" hx-swap="outerHTML"
+              hx-confirm="Are you sure you want to delete this article?">
+                Delete
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+  </table>
+  {% if total_pages > 1 %}
+  <div class="w-full flex flex-wrap items-center gap-1 p-2">
+    <script>
+      function setPageParam(pval) {
+        document.getElementById("hidden-page-input").value = pval;
+        return true;
+      }
+    </script>
+    <input id="hidden-page-input" type="hidden" name="page" value="1" form="search-form">
+    {% if page > 1 %}
+      <button class="btn page-move w-8" form="search-form" onclick='setPageParam("{{page - 1}}")'> &lt; </button>
+    {% else %}
+      <button class="btn page-move w-8" disabled> &lt; </button>
+    {% endif %}
+
+    {% for i in page_numbers %}
+      {% if i == page %}
+        <input type="submit" class="btn page-move w-8" name="page" value="{{i}}" disabled form="search-form">
+      {% else %}
+        <input type="submit" class="btn page-move w-8" name="page" value="{{i}}" form="search-form">
+      {% endif %}
+    {% endfor %}
+
+    {% if page < total_pages %}
+      <button class="btn page-move w-8" form="search-form" onclick='setPageParam("{{page + 1}}")'> &gt; </button>
+    {% else %}
+      <button class="btn page-move w-8" disabled> &gt; </button>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>

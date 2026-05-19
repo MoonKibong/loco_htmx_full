@@ -1,11 +1,10 @@
-use eyre::Context;
 use loco_htmx_full::app::App;
 #[allow(unused_imports)]
 use loco_rs::{cli::playground, prelude::*};
 
 #[tokio::main]
-async fn main() -> eyre::Result<()> {
-    let _ctx = playground::<App>().await.context("playground")?;
+async fn main() -> loco_rs::Result<()> {
+    let _ctx = playground::<App>().await?;
 
     // let active_model: articles::ActiveModel = ActiveModel {
     //     title: Set(Some("how to build apps in 3 steps".to_string())),

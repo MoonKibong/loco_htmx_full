@@ -6,28 +6,28 @@
         <i class="fas fa-list mr-3"></i> Edit Form
     </p>
     <div class="w-full leading-loose">
-        <form class="p-10 bg-white rounded shadow-xl" id="edit-form" hx-put="/articles/{{id}}" hx-target="#editor" hx-swap="outerHTML" hx-ext="json-enc">
+        <form class="p-10 bg-white rounded shadow-xl" id="edit-form" hx-put="/articles/{{item.id}}" hx-target="#editor" hx-swap="outerHTML" hx-ext="json-enc">
             <p class="text-lg text-gray-800 font-medium pb-4">Article Details</p>
-            <div class="">
+            <div>
                 <label class="block text-sm text-gray-600" for="id">ID</label>
-                <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="id" name="id" value="{{id}}" type="text" aria-label="ID" disabled>
+                <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="id" name="id" value="{{item.id}}" type="text" aria-label="ID" disabled>
             </div>
-            <div class="">
+            <div>
                 <label class="block text-sm text-gray-600" for="title">Title</label>
-                <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="title" name="title" value="{{title}}" type="text" required="" placeholder="Article Title" aria-label="Title">
+                <input class="w-full px-5 py-1 text-gray-700 bg-gray-200 rounded" id="title" name="title" value="{{item.title | default(value="")}}" type="text" required="" placeholder="Article Title" aria-label="Title">
             </div>
             <div class="mt-2">
                 <label class="block text-sm text-gray-600" for="content">Content</label>
-                <input class="w-full px-5  py-4 text-gray-700 bg-gray-200 rounded" id="content" name="content" value="{{content}}" type="text" required="" placeholder="Article Content" aria-label="Content">
+                <input class="w-full px-5 py-4 text-gray-700 bg-gray-200 rounded" id="content" name="content" value="{{item.content | default(value="")}}" type="text" required="" placeholder="Article Content" aria-label="Content">
             </div>
             <div class="mt-2 flex lg:flex-row lg:space-x-4">
                 <div class="w-full flex flex-col">
                     <label class="text-sm text-gray-600">Created At</label>
-                    <span class="w-full px-1 py-1 text-gray-500 bg-gray-200 rounded">{{created_at}}</span>
+                    <span class="w-full px-1 py-1 text-gray-500 bg-gray-200 rounded">{{item.created_at}}</span>
                 </div>
                 <div class="w-full flex flex-col">
                     <label class="text-sm text-gray-600">Updated At</label>
-                    <span class="w-full px-1 py-1 text-gray-500 bg-gray-200 rounded">{{updated_at}}</span>
+                    <span class="w-full px-1 py-1 text-gray-500 bg-gray-200 rounded">{{item.updated_at}}</span>
                 </div>
             </div>
             <div class="mt-6">
