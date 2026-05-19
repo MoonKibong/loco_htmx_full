@@ -614,11 +614,10 @@ $ curl -X GET -H 'Content-Type: application/json' localhost:3000/api/articles?ti
 
 페이지네이션을 위해 다시 `src/controllers/article.rs` 파일을 편집합니다.
 
-우선 다음 두 줄을 추가합니다.
+우선 다음 줄을 추가합니다.
 
 ```rust:
 use loco_rs::model::query::{PaginationQuery, PageResponse};
-use loco_rs::controller::views::pagination::{Pager, PagerMeta};
 ```
 
 그 아래
@@ -647,7 +646,7 @@ pub struct QueryParams {
 
 페이지네이션의 결과를 담을 구조체(struct)에 대한 정의를 추가합니다.
 ```rust:
-#[derive(Debug, Deserialize,Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ListResponse {
     pub id: i32,
     pub title: Option<String>,
@@ -655,9 +654,6 @@ pub struct ListResponse {
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
-
-#[derive(Debug, Deserialize,Serialize)]
-pub struct PaginationResponse {}
 
 impl From<Model> for ListResponse {
     fn from(article: Model) -> Self {
@@ -667,26 +663,6 @@ impl From<Model> for ListResponse {
             content: article.content.clone(),
             created_at: article.created_at,
             updated_at: article.updated_at,
-        }
-    }
-}
-impl PaginationResponse {
-    #[must_use]
-    pub fn response(
-        data: PageResponse<Model>,
-        pagination_query: &PaginationQuery,
-    ) -> Pager<Vec<ListResponse>> {
-        Pager {
-            results: data
-            .page
-            .into_iter()
-            .map(ListResponse::from)
-            .collect::<Vec<ListResponse>>(),
-            info: PagerMeta {
-                page: pagination_query.page,
-                page_size: pagination_query.page_size,
-                total_pages: data.total_pages,
-            },
         }
     }
 }
@@ -705,7 +681,15 @@ impl PaginationResponse {
     let response = model::query::paginate(
         &ctx.db, Entity::find(), Some(condition), &query_params.pagination_query
     ).await?;
-    format::json(PaginationResponse::response(response, &query_params.pagination_query))
+    let items: Vec<ListResponse> = response.page.into_iter().map(ListResponse::from).collect();
+    format::json(data!({
+        "results": items,
+        "pagination": {
+            "page": query_params.pagination_query.page,
+            "page_size": query_params.pagination_query.page_size,
+            "total_pages": response.total_pages,
+        }
+    }))
 ```
 
 페이지네이션 쿼리가 제대로 동작하는지 확인하기 위해 웹 브라우저나 wsl 쉘에서 게시물을 조회합니다.
@@ -762,26 +746,60 @@ $ curl -X GET -H 'Content-Type: application/json' localhost:3000/api/articles
 - [x] VSCode에 [Rust Analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer) 설치
 
 ## 2. HTMX 템플릿을 이용한 프론트엔드 개발
-### 2.1 HTMX 템플릿 폴더 만들기
+### 2.1 HTMX 뷰 엔진 설정하기
 
 [HTMX](https://htmx.org/)는 복잡한 자바스크립트를 작성하지 않고도 HTML 엘리먼트의 속성을 이용해 동적으로 실행하는 웹 페이지를 구현하는 기술입니다.
 
-2장에서 생성된 프로젝트의 최상위 폴더에 `templates` 폴더를 만들어 주세요
+Loco 프레임웍은 [Tera](https://keats.github.io/tera/) 템플릿 엔진을 내장하고 있습니다. HTML 템플릿 파일은 `assets/views/` 폴더에 저장합니다.
 
 ```sh:
-$ mkdir templates
+$ mkdir -p assets/views
 ```
 
-> [!NOTE]
-> 또는 프로젝트 최상위 폴더에서 `code .` 명령어를 실행하여 VSCode를 열고 `templates` 폴더를 생성할 수 있습니다.
+뷰 엔진을 초기화하기 위해 `src/initializers/view_engine.rs` 파일을 생성합니다.
 
-그 다음 현재 프로젝트에 [Askama](https://github.com/djc/askama)를 추가합니다.
+```rust:
+use async_trait::async_trait;
+use axum::{Extension, Router as AxumRouter};
+use loco_rs::{
+    app::{AppContext, Initializer},
+    controller::views::{engines, ViewEngine},
+    Result,
+};
 
-```sh:
-$ cargo add askama
+pub struct ViewEngineInitializer;
+
+#[async_trait]
+impl Initializer for ViewEngineInitializer {
+    fn name(&self) -> String {
+        "view-engine".to_string()
+    }
+
+    async fn after_routes(&self, router: AxumRouter, _ctx: &AppContext) -> Result<AxumRouter> {
+        let tera_engine = engines::TeraView::build()?;
+        Ok(router.layer(Extension(ViewEngine::from(tera_engine))))
+    }
+}
 ```
 
-Rust 개발 환경에서 HTMX 템플릿을 지원하기 위해 만들어진 라이브러리라고 이해하시면 됩니다.
+`src/initializers/mod.rs` 파일도 만들어 줍니다.
+```rust:
+pub mod view_engine;
+```
+
+`src/lib.rs`에 initializers 모듈을 추가합니다.
+```rust:
+pub mod initializers;
+```
+
+`src/app.rs`의 `initializers()` 함수에 뷰 엔진을 등록합니다.
+```rust:
+    async fn initializers(_ctx: &AppContext) -> Result<Vec<Box<dyn Initializer>>> {
+        Ok(vec![Box::new(
+            crate::initializers::view_engine::ViewEngineInitializer,
+        )])
+    }
+```
 
 이제 프로젝트의 디렉토리 구조는 다음과 같습니다.
 
@@ -790,11 +808,16 @@ myapp
 ├── Cargo.lock
 ├── Cargo.toml
 ├── README.md
+├── assets
+│    └── views      # HTML 템플릿 파일 저장 위치 !!!
 ├── config
 ├── examples
 ├── migration
 ├── src
-├── templates       # HTMX 템플릿 파일 저장 위치 !!!
+│    ├── initializers
+│    │    ├── mod.rs
+│    │    └── view_engine.rs
+│    └── ...
 └── tests
 ```
 
@@ -803,9 +826,9 @@ HTML 고수라면 HTML 만으로도 멋진 페이지를 개발할 수 있습니�
 
 HTML 문서를 만드는 데 익숙하지 않고 Tailwind CSS는 고사하고 스타일시트 언어에 대해서도 생소하다구요? 걱정하지 마세요. 뛰어난 전문가들이 잘 만들어 놓은 템플릿을 가져와 자신만의 웹 페이지로 조금씩 바꾸는 방법이 있습니다.
 
-이 장에서 우리가 만들려는 프론트엔드는 내부 관리자를 위한 웹 애플리케이션입니다. 인터넷 검색을 통해 찾아낸 [Tailwind CSS](https://tailwindcss.com/)를 이용한 관리자 앱을 위한 무료 템플릿 [Tailwind Admin Template](https://github.com/davidgrzyb/tailwind-admin-template)을 이용해 봅시다. 
+이 장에서 우리가 만들려는 프론트엔드는 내부 관리자를 위한 웹 애플리케이션입니다. 인터넷 검색을 통해 찾아낸 [Tailwind CSS](https://tailwindcss.com/)를 이용한 관리자 앱을 위한 무료 템플릿 [Tailwind Admin Template](https://github.com/davidgrzyb/tailwind-admin-template)을 이용해 봅시다.
 
-깃헙에서 위 프로젝트의 압축파일을 [Download](https://github.com/davidgrzyb/tailwind-admin-template/archive/refs/heads/master.zip)한 후 압축을 푸신 후, 모든 HTML 파일을 우리 프로젝트의 `templates` 폴더에 복사하여 붙여 넣습니다.
+깃헙에서 위 프로젝트의 압축파일을 [Download](https://github.com/davidgrzyb/tailwind-admin-template/archive/refs/heads/master.zip)한 후 압축을 푸신 후, 모든 HTML 파일을 우리 프로젝트의 `assets/views` 폴더에 복사하여 붙여 넣습니다.
 
 복사해 온 HTML 파일의 내용을 잠깐 살펴 보시면 알겠지만, 위 템플릿에서 메인 화면에 해당하는 것은 index.html 파일입니다. 다음 절에서는 웹브라우저에서 HTTP 요청을 보내 이 페이지를 띄우는 방법에 대해 알아보겠습니다.
 
@@ -890,7 +913,7 @@ pub fn routes() -> Routes {
 │ 	   	 ├── mod.rs           # 변경 필요
 │ 	   	 ├── notes.rs
 │ 	   	 └── user.rs
-└── templates
+└── assets/views
   	 ├── blank.html           # 변경 필요
   	 ├── calendar.html        # 변경 필요
   	 ├── forms.html           # 변경 필요
@@ -901,78 +924,40 @@ pub fn routes() -> Routes {
 
 우선 템플릿으로 사용할 모든 html 파일에서 `<a href=` 부분의 html 파일에 대한 링크를 서버 패스 형식으로 수정합니다. 즉, "index.html"는 "index", "blank.html"는 "blank", "calendar.html"는 "calendar", "forms.html"는 "forms", "tables.html"는 "tables", "tabs.html"는 "tabs"로 일괄 수정합니다.
 
-우리의 계획은 `home.rs`에서 각 요청에 대하여 대응하는 html 파일을 템플릿으로 써서 웹 페이지를 렌더링하도록 하려는 것입니다. `src/controllers/admin/home.rs` 파일의 소스코드는 아래와 같습니다.
+우리의 계획은 `home.rs`에서 각 요청에 대하여 대응하는 html 파일을 Tera 뷰 엔진으로 렌더링하도록 하려는 것입니다. `src/controllers/admin/home.rs` 파일의 소스코드는 아래와 같습니다.
 
 ```rust:
-use loco_rs::prelude::*;
-use askama::Template;
-use axum::response::Html;
 use axum::debug_handler;
-
-#[derive(Template)]
-#[template(path="blank.html")]
-pub struct BlankTemplate {}
-
-#[derive(Template)]
-#[template(path="calendar.html")]
-pub struct CalnedarTemplate {}
-
-#[derive(Template)]
-#[template(path="forms.html")]
-pub struct FormsTemplate {}
-
-#[derive(Template)]
-#[template(path="index.html")]
-pub struct IndexTemplate {}
-
-#[derive(Template)]
-#[template(path="tables.html")]
-pub struct TablesTemplate {}
-
-#[derive(Template)]
-#[template(path="tabs.html")]
-pub struct TabsTemplate {}
+use loco_rs::prelude::*;
 
 #[debug_handler]
-pub async fn blank() -> Result<Response> {
-    let template = BlankTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn index(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "index.html", data!({}))
 }
 
 #[debug_handler]
-pub async fn calendar() -> Result<Response> {
-    let template = CalnedarTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn blank(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "blank.html", data!({}))
 }
 
 #[debug_handler]
-pub async fn forms() -> Result<Response> {
-    let template = FormsTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn calendar(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "calendar.html", data!({}))
 }
 
 #[debug_handler]
-pub async fn index() -> Result<Response> {
-    let template = IndexTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn forms(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "forms.html", data!({}))
 }
 
 #[debug_handler]
-pub async fn tables() -> Result<Response> {
-    let template = TablesTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn tables(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "tables.html", data!({}))
 }
 
 #[debug_handler]
-pub async fn tabs() -> Result<Response> {
-    let template = TabsTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn tabs(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "tabs.html", data!({}))
 }
 
 pub fn routes() -> Routes {
@@ -987,6 +972,9 @@ pub fn routes() -> Routes {
         .add("/tabs", get(tabs))
 }
 ```
+
+> [!NOTE]
+> `ViewEngine(v): ViewEngine<TeraView>` 추출자를 통해 Tera 뷰 엔진에 접근하고, `format::render().view(&v, "템플릿파일명", data!({}))` 패턴으로 HTML을 렌더링합니다. `data!({})` 매크로는 템플릿에 전달할 데이터를 JSON 형식으로 만들어 줍니다.
 
 서버가 새로 추가된 경로를 처리할 수 있도록 다음과 같이 각 파일의 소스 코드를 수정합니다.
 `src/controllers/admin/mod.rs`에 다음의 한 줄을 추가합니다.
@@ -1031,7 +1019,7 @@ pub mod admin;        // 추가
 
 이번에는 `articles`에 대한 템플릿을 만들어 이를 백엔드 서버의 MVC와 연동해 봅시다. 예제로 활용할 수 있는 html 템플릿을 최대한 활용하겠습니다.
 
-`templates/blank.html` 파일을 복사하여 새로 `templates/articles.html` 파일을 만든 후 다음과 같이 파일 내용을 수정해 주세요. 참고로 아래 파일의 입력 양식(폼)과 표(테이블)은 `forms.html` 과 `tables.html`에 있는 것을 복사하여 수정하였습니다.
+`assets/views/blank.html` 파일을 복사하여 새로 `assets/views/articles.html` 파일을 만든 후 다음과 같이 파일 내용을 수정해 주세요. 참고로 아래 파일의 입력 양식(폼)과 표(테이블)은 `forms.html` 과 `tables.html`에 있는 것을 복사하여 수정하였습니다.
 
 ```HTML:
 <!DOCTYPE html>
@@ -1276,20 +1264,12 @@ HTMX 템플릿을 본격적으로 사용하기 위해 Head 영역에 아래 두 
 새 파일 `src/controllers/admin/articles.rs`를 만들어 다음 내용을 추가합니다.
 
 ```rust:
-use loco_rs::prelude::*;
-use askama::Template;
-use axum::response::Html;
 use axum::debug_handler;
-
-#[derive(Template)]
-#[template(path="articles.html")]
-pub struct PageTemplate {}
+use loco_rs::prelude::*;
 
 #[debug_handler]
-pub async fn render() -> Result<Response> {
-    let template = PageTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn render(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "articles.html", data!({}))
 }
 
 pub fn routes() -> Routes {
@@ -1346,98 +1326,38 @@ pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<App
 그런 다음 `src/controllers/admin/articles.rs`에서는 새로 분리한 `list_inner()` 함수를 호출하여 JSON으로 변환하지 않은 데이터를 이용하여 HTML의 내용을 채울 수 있게 다음과 같은 코드를 추가해 줍니다.
 
 ```rust:
-use loco_rs::prelude::*;
-use askama::Template;
-use axum::response::Html;
 use axum::debug_handler;
+use loco_rs::prelude::*;
 
-use loco_rs::model::query::PageResponse;
-use loco_rs::controller::Json;
 use axum::extract::Query;
-use query::PaginationQuery;
 
 use crate::controllers::article;
 use crate::controllers::article::QueryParams;
-use crate::models::_entities::articles::Model;
 use std::cmp;
 
-pub struct ItemTemplate {
-    pub id: i32,
-    pub title: String,
-    pub content: String,
-    pub created_at: DateTime,
-    pub updated_at: DateTime,
-}
-impl ItemTemplate {
-    fn from(item: Model) -> Self {
-        Self {
-            id: item.id,
-            title: item.title.unwrap_or_default(),
-            content: item.content.unwrap_or_default(),
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-        }
-    }
-}
-
-#[derive(Template)]
-#[template(path = "components/article_table.html")]
-pub struct ListTemplate {
-    pub rows: Vec<ItemTemplate>,
-    pub page: u64,
-    pub page_size: u64,
-    pub total_pages: u64,
-}
-
-impl ListTemplate {
-    const fn new() -> Self {
-        Self {
-            rows: Vec::<ItemTemplate>::new(),
-            page: 0,
-            page_size: 0,
-            total_pages: 0,
-        }
-    }
-    fn add(&mut self, elem: ItemTemplate) {
-        self.rows.push(elem);
-    }
-    
-    fn build(response: PageResponse<Model>, pagination_query: &PaginationQuery) -> Self {
-        let mut template: ListTemplate = response.page.into_iter().map(ItemTemplate::from).collect();
-        template.page = pagination_query.page;
-        template.page_size = pagination_query.page_size;
-        template.total_pages = response.total_pages;
-        template
-    }
-}
-
-impl FromIterator<ItemTemplate> for ListTemplate {
-    fn from_iter<U>(iter: U) -> Self
-    where U: IntoIterator<Item=ItemTemplate> {
-        let mut c = Self::new();
-
-        for i in iter {
-            c.add(i);
-        }
-        c
-    }
-}
-
-/// # Panics
-/// 
-/// Will panic if unwrap panics
-/// # Errors
-///
-/// Will return 'Err' if something goes wrong
 #[debug_handler]
-pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<AppContext>) -> Result<Response> {
+pub async fn list(
+    Query(query_params): Query<QueryParams>,
+    ViewEngine(v): ViewEngine<TeraView>,
+    State(ctx): State<AppContext>,
+) -> Result<Response> {
     let response = article::list_inner(&ctx, &query_params).await?;
-    let template = ListTemplate::build(response, &query_params.pagination_query);
-    
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+    let page = query_params.pagination_query.page;
+    let total_pages = response.total_pages;
+    format::render().view(
+        &v,
+        "articles/list.html",
+        data!({
+            "rows": response.page,
+            "page": page,
+            "total_pages": total_pages,
+        }),
+    )
 }
 ```
+
+> [!NOTE]
+> Tera 뷰 엔진은 `data!({})` 매크로를 통해 전달된 데이터를 Tera 템플릿의 변수로 사용합니다. 템플릿에서는 `{{변수명}}` 형식으로 접근하고, `{% for item in rows %}` 같은 제어문도 사용할 수 있습니다.
 
 같은 파일의 `fn routes()` 함수에 아래 라우팅을 추가합니다.
 
@@ -1445,7 +1365,7 @@ pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<App
   .add("/list", get(list))
 ```
 
-이제 `templates/articles.html` 템플릿에서 양식(form)에 `id` 속성과 HTMX 속성을 추가해야 합니다.
+이제 `assets/views/articles.html` 템플릿에서 양식(form)에 `id` 속성과 HTMX 속성을 추가해야 합니다.
 
 아래와 같이 되어 있는 부분을 찾으세요.
 
@@ -1497,7 +1417,7 @@ pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<App
 
 조건 검색을 실행하기 전 빈 화면은 `articles.html` 파일만으로 표현될 수 있지만, 실제 서버에서 데이터를 반환하게 되면 `"search-result"` 영역의 표에 데이터가 채워져 나타나야 합니다. 위 `"search-form"` 양식에서 검색 버튼을 클릭하게 되면 양식에 입력한 검색 조건이 쿼리스트링으로 만들어져 `hx-get` 속성에 지정된 경로 `/articles/list`에 해당하는 서버 함수를 호출하게 되고, 반환된 결과는 `hx-target` 속성에 지정된 `#search-result`(현재 문서에서 `id`가 `search-result`인 문서 요소(element))에 매핑되는데, `hx-swap`에 `outerHTML`이 지정되어 있으므로 기존의 문서 요소를 대체할 것입니다.(참고로, 만약 `hx-swap` 속성에 `innerHTML`을 지정하면 대상 element의 자식 element로 추가됩니다.)
 
-실제 데이터로 채워진 표로 `search-result` 영역을 대체하게 될 새로운 템플릿 파일인 `templates/components/article_table.html`을 아래와 같이 만들어 줍니다.
+실제 데이터로 채워진 표로 `search-result` 영역을 대체하게 될 새로운 템플릿 파일인 `assets/views/components/article_table.html`을 아래와 같이 만들어 줍니다.
 
 ```html:
 <div class="bg-white overflow-auto" id="search-result">
@@ -1639,7 +1559,7 @@ pub struct QueryParams {
 ### 2.5 편집 기능 추가하기
 
 Article 페이지에서 특정 게시물을 선택해서 수정 또는 삭제할 수 있는 기능을 추가해 봅시다.
-`templates/components/article_table.html` 파일에서 `<tbody>` 부분을 아래와 같이 수정해 주세요.
+`assets/views/components/article_table.html` 파일에서 `<tbody>` 부분을 아래와 같이 수정해 주세요.
 
 ```html:
 <tbody class="text-gray-700">        
@@ -1679,7 +1599,7 @@ Article 페이지에서 특정 게시물을 선택해서 수정 또는 삭제할
             </main>
 ```
 
-이제 `templates/components/article_form_edit.html`을 새로 만들어 아래와 같이 작성해 줍니다.
+이제 `assets/views/components/article_form_edit.html`을 새로 만들어 아래와 같이 작성해 줍니다.
 
 ```html:
 <div class="w-full mt-6 pl-0 lg:pl-2" id="editor">
@@ -1722,7 +1642,7 @@ Article 페이지에서 특정 게시물을 선택해서 수정 또는 삭제할
 </div>
 ```
 
-이번에는 신규 데이터 입력을 위한 템플릿 파일 `templates/components/article_form_new.html`을 다음과 같이 작성해 줍니다.
+이번에는 신규 데이터 입력을 위한 템플릿 파일 `assets/views/components/article_form_new.html`을 다음과 같이 작성해 줍니다.
 
 ```html:
 <div class="w-full mt-6 pl-0 lg:pl-2" id="editor">
@@ -1815,79 +1735,48 @@ pub async fn update(
 }
 ```
 
-이제 템플릿 파일과 백엔드 컨트롤러를 결합해서 프론트엔드 기능을 구현해 봅시다. `src/controllers/admin/articles.rs` 파일에 다음을 추가해 주세요.
+이제 Tera 뷰 엔진을 이용하여 템플릿 파일과 백엔드 컨트롤러를 결합해서 프론트엔드 기능을 구현해 봅시다. `src/controllers/admin/articles.rs` 파일에 다음을 추가해 주세요.
 
 ```rust:
-#[derive(Template)]
-#[template(path="components/article_form_new.html")]
-pub struct NewTemplate {}
-
-/// # Panics
-/// 
-/// Will panic if unwrap panics
-/// # Errors
-/// 
-/// Will return 'Err' if something goes wrong
 #[debug_handler]
-pub async fn new() -> Result<Response> {
-    let template = NewTemplate {};
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+pub async fn new(ViewEngine(v): ViewEngine<TeraView>) -> Result<Response> {
+    format::render().view(&v, "articles/form_new.html", data!({}))
 }
 
-/// # Panics
-/// 
-/// Will panic if unwrap panics
-/// # Errors
-/// 
-/// Will return 'Err' if something goes wrong
 #[debug_handler]
-pub async fn edit(Path(id): Path<i32>, State(ctx): State<AppContext>) -> Result<Response> {
+pub async fn edit(
+    Path(id): Path<i32>,
+    ViewEngine(v): ViewEngine<TeraView>,
+    State(ctx): State<AppContext>,
+) -> Result<Response> {
     let item = article::load_item(&ctx, id).await?;
-    let template = ItemTemplate::from(item);
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+    format::render().view(&v, "articles/form_edit.html", data!({"item": item}))
 }
 
-/// # Panics
-/// 
-/// Will panic if unwrap panics
-/// # Errors
-/// 
-/// Will return 'Err' if something goes wrong
 #[debug_handler]
-pub async fn add(State(ctx): State<AppContext>, Json(params): Json<article::Params>) -> Result<Response> {
+pub async fn add(
+    ViewEngine(v): ViewEngine<TeraView>,
+    State(ctx): State<AppContext>,
+    Json(params): Json<article::Params>,
+) -> Result<Response> {
     let item = article::add_inner(&ctx, params).await?;
-    let template = ItemTemplate::from(item);
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+    format::render().view(&v, "articles/form_edit.html", data!({"item": item}))
 }
 
-/// # Panics
-/// 
-/// Will panic if unwrap panics
-/// # Errors
-/// 
-/// Will return 'Err' if something goes wrong
 #[debug_handler]
-pub async fn update(Path(id): Path<i32>, State(ctx): State<AppContext>, Json(params): Json<article::Params>) -> Result<Response> {
+pub async fn update(
+    Path(id): Path<i32>,
+    ViewEngine(v): ViewEngine<TeraView>,
+    State(ctx): State<AppContext>,
+    Json(params): Json<article::Params>,
+) -> Result<Response> {
     let item = article::update_inner(id, &ctx, params).await?;
-    let template = ItemTemplate::from(item);
-    let rendered = template.render().unwrap();
-    Ok(Html(rendered).into_response())
+    format::render().view(&v, "articles/form_edit.html", data!({"item": item}))
 }
 ```
 
-`add()`와 `update()`에서 `ItemTemplate`을 템플릿으로 사용할 수 있게 하려면, `ItemTemplate` 구조체(struct) 앞에 `#[derive(Template)]` 매크로를 추가해 줘야 합니다.
-`pub struct ItemTemplate {`라고 된 줄 바로 위에 아래 두 줄을 추가해 주세요.
-```
-#[derive(Template)]
-#[template(path="components/article_form_edit.html")]
-```
-
-> [!IMPORTANT]
-> Rust에서 주석(코멘트)은 다른 언어와 마찬가지로 `//`를 사용합니다. `///`도 주석을 나타내는데 특수하게 문서화에 사용되는 주석을 표시합니다.
-> 통상적인 컴파일과 실행에서는 문제가 되지 않지만 깃헙에 올리게 되면 CI/CD 프로세스가 자동으로 실행되면서 코드 내용을 검사하는 Clippy가 실행되는데 런타임에 문제가 될 만한 부분에 대해 명시적으로 표시하지 않은 코드는 검사를 통과하지 못하게 됩니다. 그런 경우는 문서화 주석에 `# Panics`나 `# Errors`를 기재해 줘야 통과할 수 있습니다.
+> [!NOTE]
+> Tera 뷰 엔진을 사용하면 Askama처럼 각 템플릿마다 별도의 구조체를 정의할 필요가 없습니다. `data!({})` 매크로로 데이터를 전달하고 템플릿에서 `{{item.title}}` 형식으로 접근합니다.
 
 마지막으로 라우팅 설정 함수를 다음과 같이 변경합니다.
 
