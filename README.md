@@ -1300,26 +1300,42 @@ pub mod articles;
 이를 위해 `src/controllers/article.rs`의 `list()` 함수를 리팩토링해 봅시다. 이 함수는 요청 파라메터로부터 검색 조건을 만들어 내고 데이터베이스 쿼리를 실행하고 이를 JSON 형식으로 반환하는 일을 모두 수행하고 있는데, 이를 다음과 같이 두 개의 함수로 분리합니다.
 
 ```rust:
-pub async fn list_inner(ctx: &AppContext, query_params: &QueryParams) -> Result<PageResponse<Model>> {
-    let title_filter = query_params.title.as_ref().unwrap_or(&String::new()).clone();
-    let content_filter = query_params.content.as_ref().unwrap_or(&String::new()).clone();
+pub async fn list_inner(
+    ctx: &AppContext,
+    query_params: &QueryParams,
+) -> Result<PageResponse<Model>> {
     let mut condition = Condition::all();
-    if !title_filter.is_empty() {
-        condition = condition.add(Column::Title.contains(&title_filter));
+    if let Some(ref title) = query_params.title {
+        if !title.is_empty() {
+            condition = condition.add(Column::Title.contains(title));
+        }
     }
-    if !content_filter.is_empty() {
-        condition = condition.add(Column::Content.contains(&content_filter));
+    if let Some(ref content) = query_params.content {
+        if !content.is_empty() {
+            condition = condition.add(Column::Content.contains(content));
+        }
     }
-    
-    model::query::exec::paginate(
-        &ctx.db, Entity::find(), Some(condition), &query_params.pagination_query
+
+    model::query::paginate(
+        &ctx.db, Entity::find(), Some(condition), &query_params.pagination_query,
     ).await
 }
 
 #[debug_handler]
-pub async fn list(Query(query_params): Query<QueryParams>, State(ctx): State<AppContext>) -> Result<Response> {
+pub async fn list(
+    Query(query_params): Query<QueryParams>,
+    State(ctx): State<AppContext>,
+) -> Result<Response> {
     let response = list_inner(&ctx, &query_params).await?;
-    format::json(PaginationResponse::response(response, &query_params.pagination_query))
+    let items: Vec<ListResponse> = response.page.into_iter().map(ListResponse::from).collect();
+    format::json(data!({
+        "results": items,
+        "pagination": {
+            "page": query_params.pagination_query.page,
+            "page_size": query_params.pagination_query.page_size,
+            "total_pages": response.total_pages,
+        }
+    }))
 }
 ```
 
